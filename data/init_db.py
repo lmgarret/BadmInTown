@@ -54,6 +54,9 @@ def csv_to_db(table_name,test_mode=False):
     if not os.path.isfile(csv_file):
         print("File " + csv_file +" does not exist, aborting insertion for this one")
         return
+    if not os.path.isfile(db_file):
+        print("File " + db_file +" does not exist, please create it and populate using \"python init.py -i -c\"")
+        return
 
     with open(csv_file,'r') as csv_file_o:
         print("Loading "+csv_file+" ...")
