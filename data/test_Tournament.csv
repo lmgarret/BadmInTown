@@ -1,4 +1,4 @@
-id,name,start_date,url,lat,long,price_1_tab,price_2_tabs,price_3_tabs
-0,test1,30.10.2018,test1.html,-45.5463,-45.5463,11,18,20
-1,test2,21.01.2018,test2.html,-345.34,421.4,12,19,21
-2,test3,01.09.2015,test3.html,46.346,67.24,13,20,22
+id,name,club_id,start_date,url,lat,long,price_1_tab,price_2_tabs,price_3_tabs
+0,test1,0,30.10.2018,test1.html,-45.5463,-45.5463,11,18,20
+1,test2,0,21.01.2018,test2.html,-345.34,421.4,12,19,21
+2,test3,0,01.09.2015,test3.html,46.346,67.24,13,20,22

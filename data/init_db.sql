@@ -1,6 +1,7 @@
 CREATE TABLE Tournament (
 	id integer PRIMARY KEY AUTOINCREMENT,
 	name text,
+	club_id integer,
 	start_date date,
 	url text,
 	lat integer,
@@ -43,12 +44,6 @@ CREATE TABLE Player (
 	name text,
 	surname text,
 	gender binary
-);
-
-CREATE TABLE organizes (
-	tid integer,
-	cid integer,
-	PRIMARY KEY(tid,cid)
 );
 
 CREATE TABLE accepts_ranking (
