@@ -4,7 +4,9 @@ CREATE TABLE Tournament (
 	start_date date,
 	url text,
 	location_id integer,
-	price integer
+	price_1_tab integer,
+	price_2_tabs integer
+
 );
 CREATE TABLE Location (
 	id integer PRIMARY KEY AUTOINCREMENT,
