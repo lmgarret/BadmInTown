@@ -1,2 +1,2 @@
-id,name,short_name,location_id,url
-0,Test Club,TC,0,test-club.html
+id,name,short_name,city_name,lat,long,url
+0,Test Club,TC,Tourcoing,47.29,-37.3,test-club.html

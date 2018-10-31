@@ -3,7 +3,8 @@ CREATE TABLE Tournament (
 	name text,
 	start_date date,
 	url text,
-	location_id integer,
+	lat integer,
+	long integer,
 	price_1_tab integer,
 	price_2_tabs integer,
 	price_3_tabs integer
@@ -31,7 +32,9 @@ CREATE TABLE Club (
 	id integer PRIMARY KEY AUTOINCREMENT,
 	name text,
 	short_name text,
-	location_id integer,
+	city_name text,
+	lat integer,
+	long integer,
 	url text
 );
 

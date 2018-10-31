@@ -12,7 +12,6 @@ csv_tables = [
     'TournamentRanking',
     'TournamentCategory',
     'Club',
-    'Location',
     'Player',
     'participates',
     'organizes',
