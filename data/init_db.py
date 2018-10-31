@@ -1,10 +1,19 @@
 import sqlite3, argparse, os, csv, pprint
 
+# =============== GLOBAL PARAMETERS =============== #
+# Path of the .db file to work on
 db_file = 'badmintown.db'
+# Path of the .sql used to init the db. See @init_db_file
 sql_file = 'init_db.sql'
 
+# List of all SQL tables that will have corresponding .csv files. See @csv_to_db
 csv_tables = ['Tournament','Club','Location']
 
+# =============== FUNCTIONS DEFINITION =============== #
+
+'''
+Deletes the .db file located @db_file
+'''
 def delete_db():
     global db_file
     print("Deleting db file...")
@@ -13,7 +22,10 @@ def delete_db():
     else:
         print("File does not exist")
 
-
+'''
+Creates a new .db file @db_file by executing the sql queries located @sql_file.
+User should delete the .db file using @delete_db if it exists!
+'''
 def init_db_file():
     global db_file, sql_file
     print("Loading sql file...")
@@ -27,6 +39,12 @@ def init_db_file():
     conn.close()
     print("DB created!")
 
+'''
+Loads data located into a .csv file named "@table_name.csv" and stores it into the .db fileself.
+The .csv file should respect the naming convention as done in the test_*.csv files.
+@param table_name name of the sql table to file and of the csv file without its extension
+@param test_mode if true, will append "test_" to the .csv filename to be used, so that we populate the db using test files
+'''
 def csv_to_db(table_name,test_mode=False):
     global db_file
     csv_file = ("test_" if test_mode else "" )+table_name +".csv"
@@ -61,13 +79,17 @@ def csv_to_db(table_name,test_mode=False):
     cur.close()
     conn.close()
 
-def load_csvs_to_db(test_mode):
+'''
+Populates the database by loading all .csv files corresponding to tables enumerated in @csv_tables
+@param test_mode see @csv_to_db method
+'''
+def load_csvs_to_db(test_mode=False):
     for table in csv_tables:
         print("================ "+table+" ================")
         csv_to_db(table,test_mode)
         print("================="+("=" * len(table))+"=================\n")
 
-
+# =============== ARGUMENT PARSING AND PROGRAM LOGIC =============== #
 parser = argparse.ArgumentParser(description='Creates and populates the BadmInTown database')
 parser.add_argument('-d', "--delete", action='store_true',
                     help='Delete the .db file')
