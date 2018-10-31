@@ -3,9 +3,9 @@ CREATE TABLE Tournament (
 	name text,
 	start_date date,
 	url text,
-	location_id integer
+	location_id integer,
+	price integer
 );
-
 CREATE TABLE Location (
 	id integer PRIMARY KEY AUTOINCREMENT,
 	latitude float,
@@ -28,11 +28,12 @@ CREATE TABLE Club (
 	id integer PRIMARY KEY AUTOINCREMENT,
 	name text,
 	short_name text,
-	location_id integer
+	location_id integer,
+	url text
 );
 
 CREATE TABLE Player (
-	id integer PRIMARY KEY AUTOINCREMENT,
+	license integer PRIMARY KEY AUTOINCREMENT,
 	name text,
 	surname text,
 	gender binary
