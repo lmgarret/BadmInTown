@@ -5,7 +5,8 @@ CREATE TABLE Tournament (
 	url text,
 	location_id integer,
 	price_1_tab integer,
-	price_2_tabs integer
+	price_2_tabs integer,
+	price_3_tabs integer
 
 );
 CREATE TABLE Location (

@@ -1,4 +1,4 @@
-id,name,start_date,url,location_id,price_1_tab,price_2_tabs
-0,test1,30.10.2018,test1.html,0,11,18
-1,test2,21.01.2018,test2.html,1,12,19
-2,test3,01.09.2015,test3.html,2,13,20
+id,name,start_date,url,location_id,price_1_tab,price_2_tabs,price_3_tabs
+0,test1,30.10.2018,test1.html,0,11,18,20
+1,test2,21.01.2018,test2.html,1,12,19,21
+2,test3,01.09.2015,test3.html,2,13,20,22
