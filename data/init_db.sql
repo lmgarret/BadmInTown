@@ -19,14 +19,12 @@ CREATE TABLE Location (
 
 CREATE TABLE TournamentRanking (
 	id integer PRIMARY KEY AUTOINCREMENT,
-	name text,
-	short_name text
+	name text
 );
 
 CREATE TABLE TournamentCategory (
 	id integer PRIMARY KEY AUTOINCREMENT,
-	name text,
-	short_name text
+	name text
 );
 
 CREATE TABLE Club (
