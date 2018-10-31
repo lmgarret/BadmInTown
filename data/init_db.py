@@ -7,7 +7,18 @@ db_file = 'badmintown.db'
 sql_file = 'init_db.sql'
 
 # List of all SQL tables that will have corresponding .csv files. See @csv_to_db
-csv_tables = ['Tournament','Club','Location']
+csv_tables = [
+    'Tournament',
+    'TournamentRanking',
+    'TournamentCategory',
+    'Club',
+    'Location',
+    'Player',
+    'participates',
+    'organizes',
+    'accept_category',
+    'accepts_ranking'
+]
 
 # =============== FUNCTIONS DEFINITION =============== #
 
