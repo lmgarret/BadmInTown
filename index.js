@@ -9,15 +9,9 @@ main();
 function main() {
 	// populate the city dropdown when the page loads
 	AmCharts.ready( function() {
-		/*d3.text("data/Tournament.csv")
-	  .then( text => d3.csvParseRows(text) )
-	  .then( data => addTournament(data));
-*/
 		console.log("Loading csv...")
-		let points = [];
-		d3.csv("data/Tournament.csv", function(data) {
-			points = addTournamentPoint	(data, points);
-		});
+		loadCSVPoints();
+		console.log("CSV points created.")
 	} );
 	loadResources().then(() => {
 		console.log("Loaded resources")
@@ -30,6 +24,32 @@ async function loadResources() {
 	const loadResp = await fetch('svg/circle.svg');
 	circleFileSVG = await loadResp.text();
 	return circleFileSVG;
+}
+
+async function loadCSVPoints(){
+	console.log("Loading csv...")
+	let tournaments = [];
+	let clubs = [];
+	let clubPoints = [];
+	await d3.csv("data/Tournament.csv", function(data) {
+		tournaments.push(data)
+	});
+	await d3.csv("data/Club.csv", function(data) {
+		let club = data;
+		club.nb_tournaments = 0;
+		tournaments.forEach( tournament => {
+			if (tournament.club_id === club.id) {
+				club.lat = tournament.lat;
+				club.long = tournament.long;
+				club.nb_tournaments++;
+			}
+		});
+		clubs = addClubPoint(data, clubPoints);
+	});
+	map.dataProvider.images = clubPoints;
+	map.validateData();
+  //map.animateData( map.dataProvider, { duration: 1000 } );
+	//map.write("mapdiv");
 }
 
 function createMap() {
@@ -248,7 +268,7 @@ function createMap() {
 	    "color": "#CC0000",
 	    "rollOverColor": "#CC0000",
 	    "selectedColor": "#000000",
-	    "balloonText": "Tournament: <strong>[[title]]</strong>"
+	    "balloonText": "Club: <strong>[[title]]</strong>"
 	  },
 
 		"export": {
@@ -257,14 +277,40 @@ function createMap() {
 		"listeners": [{
     "event": "clickMapObject",
     "method": function(event) {
-					//TODO fill interaction with points
-					console.log(event.event);
-					//map.closeAllPopups();
-					//map.openPopup("We clicked on <strong>" + ev.target.dataItem.dataContext.name + "</strong>");
+				//TODO fill interaction with points
+				console.log(event.event);
+
+  			//alert('ModalClick');
+				//map.closeAllPopups();
+				//map.openPopup("We clicked on <strong>" + ev.target.dataItem.dataContext.name + "</strong>");
 	    }
 		}]
 
 	} );
+}
+function addClubPoint(club, points) {
+	customData = `
+		<p align="left">City: ${club.city_name}</p>
+		<p align="left">URL: <a href="https://badiste.fr/${club.url}">badiste.fr</a></p>
+		<p align="left">Tournaments: ${club.nb_tournaments}</p>
+		`;
+
+  const point = new AmCharts.MapImage();
+  point.title = club.name;
+	point.description = customData;
+  point.latitude = club.lat;
+  point.longitude = club.long;
+	point.type = 'circle';
+	point.color = 'blue';
+	point.selectable = true;
+  //point.svgPath = circleSVG;
+	//point.imageURL = "svg/circle.svg"
+  point.zoomLevel = 5;
+  point.scale = 0.6 * Math.pow(1.02, club.nb_tournaments);
+  point.chart = map;
+	points.push(point);
+
+	return points;
 }
 
 function addTournamentPoint(tournament, points) {
@@ -274,7 +320,7 @@ function addTournamentPoint(tournament, points) {
 			//point.width = point.width * 2;
 			//point.height = point.height * 2;
 			point.scale = 	point.scale * 1.15;
-			point.validate();
+			//point.validate();
 			sameLocationExists = true;
 			//console.log(`Same location exists:i=${index} (${point.latitude},${point.longitude})`)
 		}
@@ -289,10 +335,9 @@ function addTournamentPoint(tournament, points) {
 			${p2 !== undefined && p2 !== "" ? `<p align="left">Prix 2 tableaux: ${p2}€</p>`: ""}
 			${p3 !== undefined && p3 !== ""  ? `<p align="left">Prix 2 tableaux: ${p3}€</p>` : ""}
 			`;
-		// get the city object and add additional attributes
+
 	  const point = new AmCharts.MapImage();
 	  point.title = tournament.name;
-		//point.balloonText = `[[title]]\n${tournament.url}`
 		point.description = customData;
 	  point.latitude = tournament.lat;
 	  point.longitude = tournament.long;
@@ -305,8 +350,6 @@ function addTournamentPoint(tournament, points) {
 	  point.scale = 0.5;
 	  point.chart = map;
 
-		map.dataProvider.images.push(point);
-		point.validate();
 		points.push(point);
 	}
 	return points;
