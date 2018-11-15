@@ -1,21 +1,29 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE HTML>
+<html>
+  <head>
+		<meta charset="utf-8" />
+    <title>BadmInTown</title>
 
-<head>
-	<meta charset="utf-8"/>
-	<link rel="stylesheet" href="style.css">
-</head>
+		<!-- include leaflet css and javascript -->
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet-src.js"></script>
+    	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"crossorigin="" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+      <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"crossorigin="" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"crossorigin="" />
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
 
-<body>
-	<!-- HTML -->
-	<div id="chartdiv"></div>
+		<!-- include our own css -->
+		<link rel="stylesheet" href="index.css" />
 
-	<!-- Resources -->
-  <script src="https://www.amcharts.com/lib/4/core.js"></script>
-  <script src="https://www.amcharts.com/lib/4/maps.js"></script>
-  <script src="https://www.amcharts.com/lib/4/geodata/franceDepartmentsLow.js"></script>
-	<script src="https://d3js.org/d3.v5.min.js"></script>
-	<script src="index.js"></script>
+		<!-- we include the javascript at the bottom, see below -->
+	</head>
 
-</body>
+	<body>
+		<div id="map"></div>
+
+		<!-- include our own javascript -->
+		<script src="index.js"></script>
+
+	</body>
 </html>
