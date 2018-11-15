@@ -1,173 +1,178 @@
-let map = undefined;
-let mapTitleLabel = undefined;
+/*
+ the script mus be loaded after the map div is defined.
+ otherwise this will not work (we would need a listener to
+ wait for the DOM to be fully loaded).
 
-let clubSeries = undefined; //club imageSeries of the map
-let tournamentSeries = undefined; //tournament imageSeries of the map
+ Just put the script tag below the map div.
 
-let tournaments = [];
+ The source code below is the example from the leaflet start page.
+ */
+let map;
 let clubs = [];
-
-// svg path for target icon
-const targetSVG = "M9,0C4.029,0,0,4.029,0,9s4.029,9,9,9s9-4.029,9-9S13.971,0,9,0z M9,15.93 c-3.83,0-6.93-3.1-6.93-6.93S5.17,2.07,9,2.07s6.93,3.1,6.93,6.93S12.83,15.93,9,15.93 M12.5,9c0,1.933-1.567,3.5-3.5,3.5S5.5,10.933,5.5,9S7.067,5.5,9,5.5 S12.5,7.067,12.5,9z";
-const circleSVG = "M9,0C4.029,0,0,4.029,0,9s4.029,9,9,9s9-4.029,9-9S13.971,0,9,0z";
-let circleFileSVG = undefined;
+let departement_layer;
+let club_markers;
+let info = L.control();
+let legend = L.control({position: 'bottomright'});
 
 main();
 
 function main() {
-	// populate the city dropdown when the page loads
-	/*AmCharts.ready( function() {
-		console.log("Loading csv...")
-		loadCSVPoints();
-		console.log("CSV points created.")
-	} );*/
-	loadResources().then(() => {
-		console.log("Loaded resources")
-		createMap();
-		createMapUI();
-		loadCSVPoints();
+	create_map();
+	loadClubs();
+}
+
+function create_map(){
+	map = L.map('map',{minZoom: 0,  maxZoom: 15}).setView([46.43, 2.30], 5.5);
+ 	map._layersMaxZoom = 19;
+
+	const positron = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
+        attribution: '©OpenStreetMap, ©CartoDB'
+	}).addTo(map);
+
+	map.createPane('labels');
+	const positronLabels = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png', {
+	        attribution: '©OpenStreetMap, ©CartoDB',
+	        pane: 'labels'
+	}).addTo(map);
+
+	info.onAdd = function (map) {
+	    this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+	    this.update();
+	    return this._div;
+	};
+
+	// method that we will use to update the control based on feature properties passed
+	info.update = function (props) {
+	    this._div.innerHTML = '<h4>Badminton Clubs density</h4>' +  (props ?
+	        '<b>' + props.nom + '</b><br />' + props.density + ' Clubs</sup>'
+	        : 'Hover over a departement');
+	};
+
+	info.addTo(map);
+
+
+	legend.onAdd = function (map) {
+
+	    var div = L.DomUtil.create('div', 'info legend'),
+	        grades = [0, 5, 10, 15, 20, 30, 45, 65],
+	        labels = [];
+
+	    // loop through our density intervals and generate a label with a colored square for each interval
+	    for (var i = 0; i < grades.length; i++) {
+	        div.innerHTML +=
+	            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+	            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+	    }
+
+	    return div;
+	};
+
+	legend.addTo(map);
+}
+
+
+function loadClubs(){
+	club_markers = L.markerClusterGroup({
+	//spiderfyOnMaxZoom: false,
+		showCoverageOnHover: false,
+		maxClusterRadius: 60,
+		disableClusteringAtZoom: 9
 	});
-}
+	const temp_markers = [];
+	const geo_points = []
 
-async function loadResources() {
-	console.log("Loading resources...")
-	const loadResp = await fetch('svg/circle.svg');
-	circleFileSVG = await loadResp.text();
-	return circleFileSVG;
-}
+	d3.csv("data/Club_geo.csv", function(club){
+		if (club.lat !== "" && club.long !== ""){
+			club.lat = parseFloat(club.lat);
+			club.long = parseFloat(club.long);
+			clubs.push(club);
+			geo_points.push([club.long,club.lat]);
 
-function loadCSVPoints(){
-	console.log("Loading csv...")
-	let clubPoints = [];
-	d3.csv("data/Tournament.csv", function(data){
-		let tournament = data;
-		tournament.lat = parseFloat(tournament.lat);
-		tournament.long = parseFloat(tournament.long);
-		tournament.title = tournament.name;
-		tournaments.push(tournament);
+			const marker = new L.CircleMarker([club.lat, club.long],{
+				      radius: 6,
+	            fillColor: '#0D47A1',
+	            fillOpacity: 0.5,
+							weight: 0 //stroke width
+	        })
+			.bindPopup(`${club.name}`);
+			marker.on('click', function(e){
+				map.setView(e.latlng);
+			});
+			temp_markers.push(marker);
+		} else {
+			console.log(`Club ${club.name} has no coord.`);
+		}
 
-		const tournamentPoint = tournamentSeries.mapImages.create();
-		tournamentPoint.latitude = tournament.lat;
-		tournamentPoint.longitude = tournament.long;
-		tournamentPoint.tooltipText = tournament.name;
-		tournamentPoint.title = tournament.name;
-	})
-	.then( () => {
-		d3.csv("data/Club_geo.csv")
-		.then(data => {
-			data.forEach(club => {
-				club.title = club.name;
-
-				if(club.lat !== "" && club.long !== ""){
-
-					const clubPoint = clubSeries.mapImages.create();
-					club.lat = parseFloat(club.lat);
-					club.long = parseFloat(club.long);
-					clubs.push(club);
-
-					clubPoint.latitude = club.lat;
-					clubPoint.longitude = club.long;
-					clubPoint.tooltipText = club.name;
-					clubPoint.title = club.name;
-					clubPoint.tooltip.background.fill = am4core.color("#CEB1BE");
-				}else{
-					console.log(`Club ${club.name} has no coords.`)
+	}).then( () => {
+		// maps from https://github.com/gregoiredavid/france-geojson
+		d3.json("data/france-departements_low.geojson").then((data) => {
+			let turf_points = turf.points(geo_points);
+			data.features.forEach((polygon) => {
+				let ptsWithin = turf.pointsWithinPolygon(turf_points, polygon);
+				if(ptsWithin.features.length !== 0){
+					polygon.properties.density = ptsWithin.features.length;
 				}
 			});
-	 });
-	});
-
-  //map.animateData( map.dataProvider, { duration: 1000 } );
-	//map.write("mapdiv");
-}
-
-function createMap() {
-	console.log("Creating map...")
-  map = am4core.create("chartdiv", am4maps.MapChart);
-	map.geodata = am4geodata_franceDepartmentsLow;
-	map.projection = new am4maps.projections.Mercator();
-	const  polygonSeries = map.series.push(new am4maps.MapPolygonSeries());
-	polygonSeries.useGeodata = true;
-	polygonSeries.mapPolygons.template.events.on("hit", function(ev) {
-	  map.zoomToMapObject(ev.target);
-	});
-
-	// Configure series
-	const polygonTemplate = polygonSeries.mapPolygons.template;
-	polygonTemplate.tooltipText = "{name}";
-	polygonTemplate.fill = am4core.color("#80e5ff");
-
-	// Create hover state and set alternative fill color
-	const hs = polygonTemplate.states.create("hover");
-	hs.properties.fill = am4core.color("#1ad1ff");
-
-	clubSeries = map.series.push(new am4maps.MapImageSeries());
-	const clubSeriesTemplate = clubSeries.mapImages.template;
-	const clubCircle = clubSeriesTemplate.createChild(am4core.Circle);
-	clubCircle.radius = 4.5;
-	clubCircle.fill = am4core.color('#ff3333');
-	clubCircle.stroke = am4core.color("#FFFFFF");
-	clubCircle.strokeWidth = 0.2;
-	clubCircle.nonScaling = false;
-	clubCircle.tooltipText = "{title}";
-	clubSeriesTemplate.propertyFields.latitude = "lat";
-	clubSeriesTemplate.propertyFields.longitude = "long";
-	clubSeries.mapImages.template.events.on("hit", function(ev) {
-		map.zoomToMapObject(ev.target);
-		map.openModal(ev.target.title);
-	});
-
-	tournamentSeries = map.series.push(new am4maps.MapImageSeries());
-	tournamentSeries.hoverable = true;
-	const tournamentSeriesTemplate= tournamentSeries.mapImages.template;
-	const tournCircle = tournamentSeriesTemplate.createChild(am4core.Circle);
-	tournCircle.radius = 3;
-	tournCircle.fill = am4core.color('#0040ff');
-	tournCircle.stroke = am4core.color("#FFFFFF");
-	tournCircle.strokeWidth = 0.2;
-	tournCircle.nonScaling = false;
-	tournamentSeriesTemplate.propertyFields.latitude = "lat";
-	tournamentSeriesTemplate.propertyFields.longitude = "long";
-	tournamentSeries.mapImages.template.events.on("hit", function(ev) {
-		map.zoomToMapObject(ev.target);
-		map.openModal(ev.target.title);
+			departement_layer = L.geoJson(data, {style: dep_style,
+    		onEachFeature: onEachFeature});
+			departement_layer.addTo(map);
+		}).then(() => {
+				club_markers.addLayers(temp_markers);
+				map.addLayer(club_markers);
+		});
 	});
 }
 
-/**
-* Creates top left and right buttons for interacting with the map
-*/
-function createMapUI() {
- 	mapTitleLabel = map.chartContainer.createChild(am4core.Label);
-	mapTitleLabel.text = "Both";
+function dep_style(region) {
+  return {
+     fillColor: getColor(region.properties.density),
+		 weight: 1, //stroke width
+		 opacity: 1,
+		 color: 'white',  //Outline color
+		 fillOpacity: 0.7
+  };
+}
+function getColor(d) {
+    return d > 65 ? '#00093A' :
+           d > 45  ? '#01579B' :
+           d > 30 ? '#0288D1' :
+           d > 20  ? '#29B6F6' :
+           d > 15   ? '#4FC3F7' :
+           d > 10   ? '#81D4FA' :
+           d > 5   ? '#B3E5FC' :
+                      '#E1F5FE';
+}
 
-	map.exporting.menu = new am4core.ExportMenu();
+function highlightFeature(e) {
+    var layer = e.target;
 
-	const home = map.chartContainer.createChild(am4core.Button);
-	home.label.text = "Home";
-	home.align = "left";
-	home.events.on("hit", function(ev) {
-		map.goHome();
-	});
-	home.dy = 20;
+    layer.setStyle({
+        weight: 4,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.7
+    });
 
-	const toggleClubTournaments = map.chartContainer.createChild(am4core.Button);
-	toggleClubTournaments.label.text = "Toggle";
-	toggleClubTournaments.align = "left";
-	toggleClubTournaments.events.on("hit", function(ev) {
-		if(!clubSeries.isHidden && !tournamentSeries.isHidden){
-			clubSeries.show(500);
-			tournamentSeries.hide(250);
-			mapTitleLabel.text = "Clubs";
-		}else if (!clubSeries.isHidden && tournamentSeries.isHidden){
-			clubSeries.hide(500);
-			tournamentSeries.show(250);
-			mapTitleLabel.text = "Tournaments";
-		} else {
-			clubSeries.show(250);
-			tournamentSeries.show(250);
-			mapTitleLabel.text = "Both";
-		}
-	});
-	toggleClubTournaments.dy = 60;
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        //layer.bringToFront();
+				club_markers.bringToFront();
+    }
+    info.update(layer.feature.properties);
+}
+
+function resetHighlight(e) {
+    departement_layer.resetStyle(e.target);
+    info.update();
+}
+
+function zoomToFeature(e) {
+    map.fitBounds(e.target.getBounds());
+}
+
+function onEachFeature(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: zoomToFeature
+    });
 }
