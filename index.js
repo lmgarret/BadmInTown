@@ -133,6 +133,7 @@ function dep_style(region) {
   };
 }
 function getColor(d) {
+	//TODO use d3.interpolate ?
     return d > 65 ? '#00093A' :
            d > 45  ? '#01579B' :
            d > 30 ? '#0288D1' :
@@ -147,7 +148,6 @@ function highlightFeature(e) {
     var layer = e.target;
 
     layer.setStyle({
-        weight: 4,
         color: '#666',
         dashArray: '',
         fillOpacity: 0.7
@@ -155,7 +155,6 @@ function highlightFeature(e) {
 
     if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
         //layer.bringToFront();
-				club_markers.bringToFront();
     }
     info.update(layer.feature.properties);
 }
