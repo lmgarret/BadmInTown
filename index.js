@@ -1,16 +1,7 @@
-/*
- the script mus be loaded after the map div is defined.
- otherwise this will not work (we would need a listener to
- wait for the DOM to be fully loaded).
-
- Just put the script tag below the map div.
-
- The source code below is the example from the leaflet start page.
- */
 let map;
 let clubs = [];
 let departement_layer;
-let club_markers;
+let club_marker_clusters = [];
 let info = L.control();
 let legend = L.control({position: 'bottomright'});
 
@@ -72,22 +63,59 @@ function create_map(){
 
 
 function loadClubs(){
-	club_markers = L.markerClusterGroup({
-	//spiderfyOnMaxZoom: false,
-		showCoverageOnHover: false,
-		maxClusterRadius: 60,
-		disableClusteringAtZoom: 9
-	});
-	const temp_markers = [];
-	const geo_points = []
-
 	d3.csv("data/Club_geo.csv", function(club){
 		if (club.lat !== "" && club.long !== ""){
 			club.lat = parseFloat(club.lat);
 			club.long = parseFloat(club.long);
 			clubs.push(club);
-			geo_points.push([club.long,club.lat]);
+		} else {
+			console.log(`Club ${club.name} has no coord.`);
+		}
 
+	}).then( () => {
+		// maps from https://github.com/gregoiredavid/france-geojson
+		d3.json("data/france-departements_low.geojson").then((data) => {
+			data.features.forEach((departement) => {
+				departement.properties.density = 0;
+				let cluster = create_clubs_marker_cluster(clubs,departement);
+				club_marker_clusters.push(cluster);
+			});
+			departement_layer = L.geoJson(data, {style: dep_style,
+    		onEachFeature: onEachFeature});
+			departement_layer.addTo(map);
+		}).then(() => {
+			club_marker_clusters.forEach( cluster => {
+				map.addLayer(cluster);
+			})
+		});
+	});
+}
+
+function create_clubs_marker_cluster(clubs,departement){
+	let club_cluster = L.markerClusterGroup({
+		spiderfyOnMaxZoom: false,
+		showCoverageOnHover: false,
+		maxClusterRadius: 250,
+		disableClusteringAtZoom: 9,
+		iconCreateFunction: function(cluster) {
+			let c = ' marker-cluster-';
+			if (cluster.getChildCount() < 20) {
+				c += 'small';
+			} else if (cluster.getChildCount() < 45) {
+				c += 'medium';
+			} else {
+				c += 'large';
+			}
+
+			return new L.DivIcon({ html: '<div><span>' + cluster.getChildCount() + '</span></div>', className: 'marker-cluster' + c, iconSize: new L.Point(0, 0) });
+		}
+	});
+	const temp_markers = [];
+	clubs.forEach( club => {
+		let point = turf.point([club.long,club.lat]);
+		if(turf.inside(point,departement)){
+			departement.properties.density += 1;
+			
 			const marker = new L.CircleMarker([club.lat, club.long],{
 				      radius: 6,
 	            fillColor: '#0D47A1',
@@ -99,28 +127,10 @@ function loadClubs(){
 				map.setView(e.latlng);
 			});
 			temp_markers.push(marker);
-		} else {
-			console.log(`Club ${club.name} has no coord.`);
 		}
-
-	}).then( () => {
-		// maps from https://github.com/gregoiredavid/france-geojson
-		d3.json("data/france-departements_low.geojson").then((data) => {
-			let turf_points = turf.points(geo_points);
-			data.features.forEach((polygon) => {
-				let ptsWithin = turf.pointsWithinPolygon(turf_points, polygon);
-				if(ptsWithin.features.length !== 0){
-					polygon.properties.density = ptsWithin.features.length;
-				}
-			});
-			departement_layer = L.geoJson(data, {style: dep_style,
-    		onEachFeature: onEachFeature});
-			departement_layer.addTo(map);
-		}).then(() => {
-				club_markers.addLayers(temp_markers);
-				map.addLayer(club_markers);
-		});
-	});
+	})
+	club_cluster.addLayers(temp_markers);
+	return club_cluster;
 }
 
 function dep_style(region) {
