@@ -78,15 +78,19 @@ function loadClubs(){
 			data.features.forEach((departement) => {
 				departement.properties.density = 0;
 				let cluster = create_clubs_marker_cluster(clubs,departement);
-				club_marker_clusters.push(cluster);
+				club_marker_clusters[departement.properties.code] = cluster;
 			});
-			departement_layer = L.geoJson(data, {style: dep_style,
-    		onEachFeature: onEachFeature});
+			departement_layer = L.geoJson(
+				data, 
+				{style: dep_style,
+				onEachFeature: onEachFeature
+				}
+			);
 			departement_layer.addTo(map);
 		}).then(() => {
-			club_marker_clusters.forEach( cluster => {
-				map.addLayer(cluster);
-			})
+			for (const [key, value] of Object.entries(club_marker_clusters)) {
+				map.addLayer(value);
+			}
 		});
 	});
 }
@@ -123,8 +127,8 @@ function create_clubs_marker_cluster(clubs,departement){
 							weight: 0 //stroke width
 	        })
 			.bindPopup(`${club.name}`);
-			marker.on('click', function(e){
-				map.setView(e.latlng);
+			marker.on({
+				click: moveViewTo
 			});
 			temp_markers.push(marker);
 		}
@@ -155,7 +159,8 @@ function getColor(d) {
 }
 
 function highlightFeature(e) {
-    var layer = e.target;
+    let layer = e.target;
+	let dep_code = layer.feature.properties.code;
 
     layer.setStyle({
         color: '#666',
@@ -164,7 +169,8 @@ function highlightFeature(e) {
     });
 
     if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-        //layer.bringToFront();
+        layer.bringToFront();
+		club_marker_clusters[dep_code].getAllChildMarkers().forEach( (c) => c.bringToFront());
     }
     info.update(layer.feature.properties);
 }
@@ -176,6 +182,10 @@ function resetHighlight(e) {
 
 function zoomToFeature(e) {
     map.fitBounds(e.target.getBounds());
+}
+
+function moveViewTo(e){
+	map.setView(e.latlng);
 }
 
 function onEachFeature(feature, layer) {
