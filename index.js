@@ -170,7 +170,9 @@ function highlightFeature(e) {
 
     if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
         layer.bringToFront();
-		club_marker_clusters[dep_code].getAllChildMarkers().forEach( (c) => c.bringToFront());
+		club_marker_clusters[dep_code].eachLayer(function(l) {
+		  l.bringToFront();
+		});
     }
     info.update(layer.feature.properties);
 }
