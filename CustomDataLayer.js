@@ -1,0 +1,229 @@
+const FRANCE_GEOJSON_PATH = "data/france-departements_low.geojson";
+
+class CustomDataLayer {
+
+    constructor(json_path) {
+        this.json_path = json_path;
+        this.dataPoints = [];
+    }
+
+    /**
+     * Function called when parsing the csv file and we need to apply some transformation on each data point.
+     * @param dataPoint
+     */
+    onDataPointParsed(dataPoint) {
+        if (dataPoint.lat !== "" && dataPoint.long !== "") {
+            dataPoint.lat = parseFloat(dataPoint.lat);
+            dataPoint.long = parseFloat(dataPoint.long);
+            this.dataPoints.push(dataPoint);
+            this.markerCluster.addLayer(this.createMarker(dataPoint));
+        } else {
+            console.log(`${this.getDataType()} ${dataPoint.name} has no coord.`);
+        }
+        return dataPoint;
+    }
+
+    onDepartmentParsed(department) {
+        return department
+    }
+
+    loadDataPoints(map) {
+        this.markerCluster = this.createMarkerCluster();
+
+        d3.json(FRANCE_GEOJSON_PATH, d => this.onDepartmentParsed(d))
+            .then(departments => {
+                d3.csv(this.json_path, d => this.onDataPointParsed(d))
+                    .then(dataPoints => {
+                        departments.features.forEach((department) => this.computeDepartmentDensity(department, dataPoints));
+                        this.department_layer = L.geoJson(
+                            departments,
+                            {
+                                style: this.departmentStyle.bind(this),
+                                onEachFeature: this.onEachFeature.bind(this)
+                            }
+                        );
+                        this.department_layer.addTo(map);
+                        this.markerCluster.addTo(map)
+                    });
+            });
+    }
+
+    createMarkerCluster() {
+        return L.markerClusterGroup({
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            maxClusterRadius: function (zoom) {
+                return zoom > 8.5 ? 2 :
+                    250;
+            },
+            disableClusteringAtZoom: 21,
+            iconCreateFunction: function (cluster) {
+                let c = ' marker-cluster-';
+                if (cluster.getChildCount() < 20) {
+                    c += 'small';
+                } else if (cluster.getChildCount() < 45) {
+                    c += 'medium';
+                } else {
+                    c += 'large';
+                }
+                return new L.DivIcon({
+                    html: '<div><span>' + cluster.getChildCount() + '</span></div>',
+                    className: 'marker-cluster' + c,
+                    iconSize: new L.Point(0, 0)
+                });
+            }
+        });
+    }
+
+    createMarker(dataPoint) {
+        const marker = new L.CircleMarker([dataPoint.lat, dataPoint.long], {
+            radius: 6,
+            fillColor: this.markerFillColor(),
+            fillOpacity: 0.8,
+            weight: 0 //stroke width
+        }).bindPopup(`${dataPoint.name}`);
+        marker.on({
+            click: this.moveViewTo
+        });
+        return marker;
+    }
+
+    computeDepartmentDensity(department, dataPoints) {
+        department.properties.density = 0;
+        dataPoints.forEach(dataPoint => {
+            let point = turf.point([dataPoint.long, dataPoint.lat]);
+            if (turf.inside(point, department)) {
+                department.properties.density ++;
+            }
+        });
+        return department;
+    }
+
+    departmentStyle(department) {
+        return {
+            fillColor: this.getDepartmentColor(department.properties.density),
+            weight: 1, //stroke width
+            opacity: 1,
+            color: 'white',  //Outline color
+            fillOpacity: 0.8
+        };
+    }
+
+    departmentStyleHighlighted() {
+        return {
+            dashArray: '',
+            fillOpacity: 0,
+        };
+    }
+
+    getDepartmentColor(d) {
+        //TODO use d3.interpolate ?
+        return d > 65 ? '#00093A' :
+            d > 45 ? '#01579B' :
+                d > 30 ? '#0288D1' :
+                    d > 20 ? '#29B6F6' :
+                        d > 15 ? '#4FC3F7' :
+                            d > 10 ? '#81D4FA' :
+                                d > 5 ? '#B3E5FC' :
+                                    '#E1F5FE';
+    }
+
+    markerFillColor() {
+        return "#000000"
+    }
+
+    highlightFeature(e) {
+        let layer = e.target;
+        let dep_code = layer.feature.properties.code;
+
+        this.department_layer.eachLayer(l => this.department_layer.resetStyle(l))
+        layer.setStyle({
+            dashArray: '',
+            fillOpacity: 0,
+        });
+
+        info.update(layer.feature.properties);
+    }
+
+    resetHighlight(e) {
+        let polygon = e.target.toGeoJSON();
+        let point = turf.point([e.latlng.lng, e.latlng.lat]);
+
+        if (!turf.inside(point, polygon)) {
+            this.department_layer.resetStyle(e.target);
+        }
+        info.update();
+    }
+
+    zoomToFeature(e) {
+        map.fitBounds(e.target.getBounds());
+    }
+
+    moveViewTo(e) {
+        map.setView(e.latlng);
+    }
+
+    onEachFeature(feature, layer) {
+        layer.on({
+            mouseover: this.highlightFeature.bind(this),
+            mouseout: this.resetHighlight.bind(this),
+            click: this.zoomToFeature.bind(this)
+        });
+    }
+
+    getDataType() {
+        return "dataPoint";
+    }
+}
+
+class ClubsLayer extends CustomDataLayer {
+    constructor() {
+        super("data/Club_geo.csv");
+    }
+
+    getDataType() {
+        return "club"
+    }
+
+    getDepartmentColor(d) {
+        //TODO use d3.interpolate ?
+        return d > 65 ? '#00093A' :
+            d > 45 ? '#01579B' :
+                d > 30 ? '#0288D1' :
+                    d > 20 ? '#29B6F6' :
+                        d > 15 ? '#4FC3F7' :
+                            d > 10 ? '#81D4FA' :
+                                d > 5 ? '#B3E5FC' :
+                                    '#E1F5FE';
+    }
+
+    markerFillColor() {
+        return "#0D47A1"
+    }
+}
+
+class TournamentsLayer extends CustomDataLayer {
+    constructor() {
+        super("data/Tournament.csv");
+    }
+
+    getDataType() {
+        return "tournament";
+    }
+
+    getDepartmentColor(d) {
+        //TODO use d3.interpolate ?
+        return d > 65 ? '#FF6F00' :
+            d > 45 ? '#FF8F00' :
+                d > 30 ? '#FFA000' :
+                    d > 20 ? '#FFB300' :
+                        d > 15 ? '#FFC107' :
+                            d > 10 ? '#FFCA28' :
+                                d > 5 ? '#FFD54F' :
+                                    '#FFE082';
+    }
+
+    markerFillColor() {
+        return '#FFEB3B'
+    }
+}
