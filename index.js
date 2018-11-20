@@ -13,7 +13,7 @@ function main() {
 }
 
 function create_map(){
-	map = L.map('map',{minZoom: 0,  maxZoom: 15}).setView([46.43, 2.30], 5.5);
+	map = L.map('map',{minZoom: 0,  maxZoom: 19}).setView([46.43, 2.30], 5.5);
  	map._layersMaxZoom = 19;
 
 	const positron = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
@@ -98,7 +98,7 @@ function loadClubs(){
 function create_clubs_marker_cluster(clubs,departement){
 		//This function will be set as radiusFn(zoom) in the function _generateInitialClusters
 	var GetRadius = function (zoom) {
-    return zoom > 8 ? 2 :
+    return zoom > 8.5 ? 2 :
                       250;
 	}
 
