@@ -81,7 +81,7 @@ function loadClubs(){
 				club_marker_clusters[departement.properties.code] = cluster;
 			});
 			departement_layer = L.geoJson(
-				data, 
+				data,
 				{style: dep_style,
 				onEachFeature: onEachFeature
 				}
@@ -96,11 +96,17 @@ function loadClubs(){
 }
 
 function create_clubs_marker_cluster(clubs,departement){
+		//This function will be set as radiusFn(zoom) in the function _generateInitialClusters
+	var GetRadius = function (zoom) {
+    return zoom > 8 ? 2 :
+                      250;
+	}
+
 	let club_cluster = L.markerClusterGroup({
-		spiderfyOnMaxZoom: false,
+		spiderfyOnMaxZoom: true,
 		showCoverageOnHover: false,
-		maxClusterRadius: 250,
-		disableClusteringAtZoom: 9,
+		maxClusterRadius: GetRadius,
+		disableClusteringAtZoom: 21,
 		iconCreateFunction: function(cluster) {
 			let c = ' marker-cluster-';
 			if (cluster.getChildCount() < 20) {
@@ -119,7 +125,7 @@ function create_clubs_marker_cluster(clubs,departement){
 		let point = turf.point([club.long,club.lat]);
 		if(turf.inside(point,departement)){
 			departement.properties.density += 1;
-			
+
 			const marker = new L.CircleMarker([club.lat, club.long],{
 				      radius: 6,
 	            fillColor: '#0D47A1',
