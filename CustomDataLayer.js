@@ -6,7 +6,7 @@ class CustomDataLayer {
     constructor(json_path) {
         this.json_path = json_path;
         this.dataPoints = [];
-        this.visible = true;
+        this.visible = false;
 
         this.infoLabel = L.control();
         this.infoLabel.onAdd = function (map) {
