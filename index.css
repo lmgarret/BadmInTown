@@ -53,6 +53,11 @@ html, body {
     background-color: #f4f4f4;
 }
 
+.btn-france{
+    padding-top: 2px;
+    text-indent: -1px;
+}
+
 .marker-cluster {
     background-clip: padding-box;
     border-radius: 20px;

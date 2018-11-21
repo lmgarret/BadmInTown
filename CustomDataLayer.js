@@ -1,4 +1,4 @@
-const FRANCE_GEOJSON_PATH = "data/france-departements_low.geojson";
+const FRANCE_GEOJSON_PATH = "geojson/france-departements_low.geojson";
 const CLUSTER_VISIBILITY_ZOOM = 8;
 
 class CustomDataLayer {

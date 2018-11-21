@@ -26,8 +26,6 @@ function create_map() {
     map = L.map('map', {
         minZoom: 0,
         maxZoom: 13,
-        zoomDelta: 1,
-        zoomSnap: 1
     }).setView([46.43, 2.30], 5.5);
     map._layersMaxZoom = 13;
 
@@ -35,7 +33,7 @@ function create_map() {
         attribution: '©OpenStreetMap, ©CartoDB'
     }).addTo(map);
 
-    return d3.json('data/france_shape.geojson').then(geoJSON => {
+    return d3.json('geojson/france_shape.geojson').then(geoJSON => {
         const france_light_layer = L.TileLayer.boundaryCanvas('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
             attribution: '©OpenStreetMap, ©CartoDB',
             boundary: geoJSON,
@@ -55,7 +53,10 @@ function createLeftControls() {
     buttons = L.control.custom({
         position: 'topleft',
         content: '<button type="button" class="leaflet-control btn btn-default" id="toggleButton">' +
-            '    <i class="fa fa-home"></i>',
+            '    <i class="fa fa-home"></i>'+
+            '</button>'+
+            '<button type="button" class="btn btn-france" id="franceButton">'+
+            '    <img src="svg/fr.svg" alt="fr"  width="15" height="15" >',
         classes: 'btn-group-vertical btn-group-sm',
         style:
             {
@@ -70,21 +71,29 @@ function createLeftControls() {
         events:
             {
                 click: function (data) {
-                    if(data.target.id === "toggleButton"){
-                        if (clubsLayer.visible) {
-                            clubsLayer.hide();
-                            tournamentsLayer.show();
-                            buttons.container.innerHTML = '<button type="button" class="leaflet-control btn btn-default leaflet-control" id="toggleButton">' +
-                                '    <i class="fa fa-trophy"></i>';
-                        } else if (tournamentsLayer.visible) {
-                            clubsLayer.show();
-                            tournamentsLayer.hide();
-                            buttons.container.innerHTML = '<button type="button" class="leaflet-control btn btn-default" id="toggleButton">' +
-                                '    <i class="fa fa-home"></i>';
+                    switch (data.target.id) {
+                        case "toggleButton":
+                            if (clubsLayer.visible) {
+                                clubsLayer.hide();
+                                tournamentsLayer.show();
+                                buttons.container.innerHTML = '<button type="button" class="leaflet-control btn btn-default leaflet-control" id="toggleButton">' +
+                                    '    <i class="fa fa-trophy"></i>';
+                            } else if (tournamentsLayer.visible) {
+                                clubsLayer.show();
+                                tournamentsLayer.hide();
+                                buttons.container.innerHTML = '<button type="button" class="leaflet-control btn btn-default" id="toggleButton">' +
+                                    '    <i class="fa fa-home"></i>';
 
-                        } else {
-                            console.log("ToggleControl: error onclick.");
-                        }
+                            } else {
+                                console.log("ToggleControl: error onclick.");
+                            }
+                            break;
+                        case "franceButton":
+                            map.setView([46.43, 2.30], 5.5);
+                            break;
+                        default:
+                            break;
+
                     }
                 },
                 dblclick: function (data) {
