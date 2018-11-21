@@ -74,7 +74,6 @@ class CustomDataLayer {
     }
 
     show() {
-        console.log(this);
         this.visible = true;
 
         this.department_layer.addTo(map);
@@ -85,7 +84,7 @@ class CustomDataLayer {
         map.removeLayer(this.markerCluster);
 
         map.on('zoom', () => {
-            console.log(`zoom=${map.getZoom()}`);
+            //console.log(`zoom=${map.getZoom()}`);
             if (this.visible) {
                 if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM) {
                     map.addLayer(this.markerCluster);

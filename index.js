@@ -1,4 +1,3 @@
-
 let map;
 
 let clubsLayer;
@@ -14,7 +13,7 @@ function main() {
         tournamentsLayer = new TournamentsLayer();
         let promiseTournaments = tournamentsLayer.loadDataPoints(map);
 
-        Promise.all([promiseClubs,promiseTournaments]).then(()=> {
+        Promise.all([promiseClubs, promiseTournaments]).then(() => {
             //tournamentsLayer.show();
             clubsLayer.show();
         });
@@ -22,7 +21,12 @@ function main() {
 }
 
 function create_map() {
-    map = L.map('map', {minZoom: 0, maxZoom: 13}).setView([46.43, 2.30], 5.5);
+    map = L.map('map', {
+        minZoom: 0,
+        maxZoom: 13,
+        zoomDelta: 0.5,
+        zoomSnap: 0.5
+    }).setView([46.43, 2.30], 5.5);
     map._layersMaxZoom = 13;
 
     const positron = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
