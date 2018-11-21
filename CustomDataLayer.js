@@ -1,10 +1,12 @@
 const FRANCE_GEOJSON_PATH = "data/france-departements_low.geojson";
+const CLUSTER_VISIBILITY_ZOOM = 8;
 
 class CustomDataLayer {
 
     constructor(json_path) {
         this.json_path = json_path;
         this.dataPoints = [];
+        this.visible = true;
     }
 
     /**
@@ -43,17 +45,46 @@ class CustomDataLayer {
                             }
                         );
                         this.department_layer.addTo(map);
-                        this.markerCluster.addTo(map)
+                        this.markerCluster.addTo(map);
+                        map.removeLayer(this.markerCluster);
+
+                        map.on('zoom', () => {
+                            console.log(`zoom=${map.getZoom()}`);
+                            if(this.visible){
+                                if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM){
+                                    map.addLayer(this.markerCluster);
+                                }else{
+                                    map.removeLayer(this.markerCluster);
+                                }
+                            }
+
+                        });
                     });
             });
     }
+
+    show(){
+        this.visible = true;
+
+        map.addLayer(this.department_layer);
+        map.addLayer(this.markerCluster);
+    }
+
+    hide(){
+        this.visible = false;
+
+        map.removeLayer(this.department_layer);
+        map.removeLayer(this.markerCluster);
+    }
+
+
 
     createMarkerCluster() {
         return L.markerClusterGroup({
             spiderfyOnMaxZoom: true,
             showCoverageOnHover: false,
             maxClusterRadius: function (zoom) {
-                return zoom > 8.5 ? 2 :
+                return zoom >= CLUSTER_VISIBILITY_ZOOM ? 2 :
                     250;
             },
             disableClusteringAtZoom: 21,
@@ -159,6 +190,11 @@ class CustomDataLayer {
         map.fitBounds(e.target.getBounds());
     }
 
+    onDepartmentClicked(e){
+        this.moveViewTo(e).bind(this);
+        map.addLayer(this.markerCluster);
+    }
+
     moveViewTo(e) {
         map.setView(e.latlng);
     }
@@ -224,6 +260,6 @@ class TournamentsLayer extends CustomDataLayer {
     }
 
     markerFillColor() {
-        return '#FFEB3B'
+        return '#E65100'
     }
 }

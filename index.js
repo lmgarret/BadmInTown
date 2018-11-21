@@ -1,15 +1,5 @@
-const MODE_CLUB = "club";
-const MODE_TOURNAMENT = "tournament";
 
 let map;
-
-let clubs = [];
-let club_marker_clusters = [];
-let departement_club_layer;
-
-let tournaments = [];
-let tournament_marker_clusters = [];
-let departement_tournament_layer;
 
 let info = L.control();
 let legend = L.control({position: 'bottomright'});
@@ -21,11 +11,12 @@ main();
 
 function main() {
     create_map().then(() => {
-        //clubsLayer = new ClubsLayer();
+        clubsLayer = new ClubsLayer();
         //clubsLayer.loadDataPoints(map);
 
         tournamentsLayer = new TournamentsLayer();
         tournamentsLayer.loadDataPoints(map);
+        //tournamentsLayer.show();
     });
 }
 
