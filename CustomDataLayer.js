@@ -7,6 +7,8 @@ class CustomDataLayer {
         this.json_path = json_path;
         this.dataPoints = [];
         this.visible = false;
+        this.loadedDepartments = 0;
+        this.totalDepartments = 95;
 
         this.infoLabel = L.control();
         this.infoLabel.onAdd = function (map) {
@@ -49,68 +51,94 @@ class CustomDataLayer {
     }
 
     onDepartmentParsed(department) {
+        this.totalDepartments++;
         return department
     }
 
     loadDataPoints(map) {
+        _onLoadStarted();
         this.markerCluster = this.createMarkerCluster();
 
         let promiseDepartment = d3.json(FRANCE_GEOJSON_PATH, d => this.onDepartmentParsed(d));
         let promiseDataPoints = d3.csv(this.json_path, d => this.onDataPointParsed(d));
 
-        return Promise.all([promiseDepartment, promiseDataPoints]).then(values => {
-            let departments = values[0];
-            let dataPoints = values[1];
+        this.loadingPromise = new Promise((resolveLoadingPromise, reject) => {
+            Promise.all([promiseDepartment, promiseDataPoints]).then(values => {
+                let departments = values[0];
+                let dataPoints = values[1];
 
-            departments.features.forEach((department) => this.computeDepartmentDensity(department, dataPoints));
-            this.department_layer = L.geoJson(
-                departments,
-                {
-                    style: this.departmentStyle.bind(this),
-                    onEachFeature: this.onEachDepartmentFeature.bind(this)
+                for (let i = 0, len = departments.features.length; i < len; i++) {
+                    //we sleep here to let the display update itself
+                    sleep(50).then(() => {
+                        this.computeDepartmentDensity(departments.features[i], dataPoints);
+                        this.loadedDepartments++;
+                        _onLoadProgress();
+                        //this.onEachDepartmentFeature(departments.features[i],departments.features[i])
+                    }).then(() => {
+                        if (i === departments.features.length - 1) {
+                            this.department_layer = L.geoJson(
+                                departments,
+                                {
+                                    style: this.departmentStyle.bind(this),
+                                    onEachFeature: this.onEachDepartmentFeature.bind(this)
+                                }
+                            );
+
+                            resolveLoadingPromise(42);
+                        }
+                    });
                 }
-            );
+
+
+            });
+
         });
+        return this.loadingPromise;
     }
 
     show() {
-        this.visible = true;
+        this.loadingPromise.then(() => {
+            this.visible = true;
 
-        this.department_layer.addTo(map);
-        this.markerCluster.addTo(map);
-        this.infoLabel.addTo(map);
-        this.legendLabel.addTo(map);
+            this.department_layer.addTo(map);
+            this.markerCluster.addTo(map);
+            this.infoLabel.addTo(map);
+            this.legendLabel.addTo(map);
 
-        map.removeLayer(this.markerCluster);
-
-        map.on('zoom', () => {
-            //console.log(`zoom=${map.getZoom()}`);
-            if (this.visible) {
-                if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM) {
-                    map.addLayer(this.markerCluster);
-                } else {
-                    map.removeLayer(this.markerCluster);
-                }
-            }
-
-        });
-        map.addLayer(this.department_layer);
-        if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM) {
-            map.addLayer(this.markerCluster);
-        } else {
             map.removeLayer(this.markerCluster);
-        }
-        map.addControl(this.infoLabel);
-        map.addControl(this.legendLabel);
+
+            map.on('zoom', () => {
+                //console.log(`zoom=${map.getZoom()}`);
+                if (this.visible) {
+                    if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM) {
+                        map.addLayer(this.markerCluster);
+                    } else {
+                        map.removeLayer(this.markerCluster);
+                    }
+                }
+
+            });
+            map.addLayer(this.department_layer);
+            if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM) {
+                map.addLayer(this.markerCluster);
+            } else {
+                map.removeLayer(this.markerCluster);
+            }
+            map.addControl(this.infoLabel);
+            map.addControl(this.legendLabel);
+        });
     }
 
     hide() {
-        this.visible = false;
 
-        map.removeLayer(this.department_layer);
-        map.removeLayer(this.markerCluster);
-        map.removeControl(this.infoLabel);
-        map.removeControl(this.legendLabel);
+        this.loadingPromise.then(() => {
+            this.visible = false;
+
+            map.removeLayer(this.department_layer);
+            map.removeLayer(this.markerCluster);
+            map.removeControl(this.infoLabel);
+            map.removeControl(this.legendLabel);
+        });
     }
 
 
@@ -209,7 +237,7 @@ class CustomDataLayer {
         this.department_layer.eachLayer(l => {
             this.department_layer.resetStyle(l);
         });
-        if(map.getZoom() < CLUSTER_VISIBILITY_ZOOM ){
+        if (map.getZoom() < CLUSTER_VISIBILITY_ZOOM) {
             layer.openPopup();
         }
 
@@ -246,8 +274,8 @@ class CustomDataLayer {
     onEachDepartmentFeature(feature, layer) {
         if (feature.properties) {
             const popupHTML = `<b>${feature.properties.nom}</b>`
-                +`: ${feature.properties.density}`
-                +` ${this.getDataType()}s.`;
+                + `: ${feature.properties.density}`
+                + ` ${this.getDataType()}s.`;
             layer.bindPopup(popupHTML, {closeButton: false, offset: L.point(0, 0)});
         }
         layer.on({
@@ -266,6 +294,11 @@ class CustomDataLayer {
         this._div.innerHTML = '<h4>DataPoints density</h4>' + (props ?
             '<b>' + props.nom + '</b><br />' + props.density + ' datapoints</sup>'
             : 'Hover over a department');
+    }
+
+    getLoadingPercentage() {
+        //rough estimation of the progress done so far
+        return 100 * this.loadedDepartments / this.totalDepartments;
     }
 }
 
@@ -303,7 +336,6 @@ class ClubsLayer extends CustomDataLayer {
             '<b>' + props.nom + '</b><br />' + props.density + ' clubs</sup>'
             : 'Hover over a department');
     }
-
 }
 
 class TournamentsLayer extends CustomDataLayer {
@@ -339,5 +371,11 @@ class TournamentsLayer extends CustomDataLayer {
         this._div.innerHTML = '<h4>Tournaments density</h4>' + (props ?
             '<b>' + props.nom + '</b><br />' + props.density + ' tournaments</sup>'
             : 'Hover over a department');
+    }
+}
+
+async function asyncForEach(array, callback) {
+    for (let index = 0; index < array.length; index++) {
+        await callback(array[index], index, array);
     }
 }
