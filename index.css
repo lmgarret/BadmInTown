@@ -34,36 +34,42 @@ html, body {
     opacity: 0.7;
 }
 
-.btn{
-    width: 34px;
-    height: 34px;
+.btn:hover {
+    background-color: #f4f4f4;
+}
+
+
+.btn {
+    font-size: 15px;
     background-color: white;
-    border-radius: 4px;
+    padding-left: 8px;
+    height: 30px;
+    padding-top: 4px;
+}
+
+.btn-france{
+    padding-top: 2px;
+    padding-left: 6px;
+}
+
+.btn-group-vertical{
+    margin-top: 10px;
+    margin-left: 10px;
+
+    width: 34px;
+    margin-left: 10px;
     border: 2px solid rgba(0, 0, 0, 0.2);
     border-image-outset: 0;
     border-image-repeat: stretch;
     border-image-slice: 100%;
     border-image-source: none;
     border-image-width: 1;
-    background-clip: padding-box;
-    font-size: 15px;
-    cursor: pointer;
-    clear: both;
-    float: left;
-    margin-top: 2px;
-}
-.btn:hover {
-    background-color: #f4f4f4;
-}
-
-.btn-france{
-    padding-top: 2px;
-    text-indent: -1px;
-}
-
-.btn-group-vertical{
-    margin-top: 10px;
-    margin-left: 10px;
+    border-image-outset: 0;
+    border-image-repeat: stretch;
+    border-image-slice: 100%;
+    border-image-source: none;
+    border-image-width: 1;
+    border-radius: 4px;
 }
 
 .btn-group-first{

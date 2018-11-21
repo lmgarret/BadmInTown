@@ -81,10 +81,10 @@ function createLeftControls() {
     buttons = L.control.custom({
         position: 'topleft',
         content: htmlFranceButton + htmlToggleButtonClubs,
-        classes: 'btn-group-vertical btn-group-sm',
+        classes: 'btn-group-vertical',
         style:
             {
-                opacity: '1',
+                opacity: 1,
             },
         datas:
             {
