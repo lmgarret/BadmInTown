@@ -7,6 +7,29 @@ class CustomDataLayer {
         this.json_path = json_path;
         this.dataPoints = [];
         this.visible = true;
+
+        this.infoLabel = L.control();
+        this.infoLabel.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+            this.update();
+            return this._div;
+        };
+        this.infoLabel.update = this.updateInfoLabel;
+
+        this.legendLabel = L.control({position: 'bottomright'});
+        this.legendLabel.onAdd = function (map) {
+            let colorGrades = this.getDepartmentColorGrades();
+            let div = L.DomUtil.create('div', 'info legend');
+
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (let i = 0; i < colorGrades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + this.getDepartmentColor(colorGrades[i] + 1) + '"></i> ' +
+                    colorGrades[i] + (colorGrades[i + 1] ? '&ndash;' + colorGrades[i + 1] + '<br>' : '+');
+            }
+
+            return div;
+        }.bind(this);
     }
 
     /**
@@ -32,51 +55,64 @@ class CustomDataLayer {
     loadDataPoints(map) {
         this.markerCluster = this.createMarkerCluster();
 
-        d3.json(FRANCE_GEOJSON_PATH, d => this.onDepartmentParsed(d))
-            .then(departments => {
-                d3.csv(this.json_path, d => this.onDataPointParsed(d))
-                    .then(dataPoints => {
-                        departments.features.forEach((department) => this.computeDepartmentDensity(department, dataPoints));
-                        this.department_layer = L.geoJson(
-                            departments,
-                            {
-                                style: this.departmentStyle.bind(this),
-                                onEachFeature: this.onEachFeature.bind(this)
-                            }
-                        );
-                        this.department_layer.addTo(map);
-                        this.markerCluster.addTo(map);
-                        map.removeLayer(this.markerCluster);
+        let promiseDepartment = d3.json(FRANCE_GEOJSON_PATH, d => this.onDepartmentParsed(d));
+        let promiseDataPoints = d3.csv(this.json_path, d => this.onDataPointParsed(d));
 
-                        map.on('zoom', () => {
-                            console.log(`zoom=${map.getZoom()}`);
-                            if(this.visible){
-                                if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM){
-                                    map.addLayer(this.markerCluster);
-                                }else{
-                                    map.removeLayer(this.markerCluster);
-                                }
-                            }
+        return Promise.all([promiseDepartment, promiseDataPoints]).then(values => {
+            let departments = values[0];
+            let dataPoints = values[1];
 
-                        });
-                    });
-            });
+            departments.features.forEach((department) => this.computeDepartmentDensity(department, dataPoints));
+            this.department_layer = L.geoJson(
+                departments,
+                {
+                    style: this.departmentStyle.bind(this),
+                    onEachFeature: this.onEachFeature.bind(this)
+                }
+            );
+        });
     }
 
-    show(){
+    show() {
+        console.log(this);
         this.visible = true;
 
+        this.department_layer.addTo(map);
+        this.markerCluster.addTo(map);
+        this.infoLabel.addTo(map);
+        this.legendLabel.addTo(map);
+
+        map.removeLayer(this.markerCluster);
+
+        map.on('zoom', () => {
+            console.log(`zoom=${map.getZoom()}`);
+            if (this.visible) {
+                if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM) {
+                    map.addLayer(this.markerCluster);
+                } else {
+                    map.removeLayer(this.markerCluster);
+                }
+            }
+
+        });
         map.addLayer(this.department_layer);
-        map.addLayer(this.markerCluster);
+        if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM) {
+            map.addLayer(this.markerCluster);
+        } else {
+            map.removeLayer(this.markerCluster);
+        }
+        map.addControl(this.infoLabel);
+        map.addControl(this.legendLabel);
     }
 
-    hide(){
+    hide() {
         this.visible = false;
 
         map.removeLayer(this.department_layer);
         map.removeLayer(this.markerCluster);
+        map.removeControl(this.infoLabel);
+        map.removeControl(this.legendLabel);
     }
-
 
 
     createMarkerCluster() {
@@ -124,7 +160,7 @@ class CustomDataLayer {
         dataPoints.forEach(dataPoint => {
             let point = turf.point([dataPoint.long, dataPoint.lat]);
             if (turf.inside(point, department)) {
-                department.properties.density ++;
+                department.properties.density++;
             }
         });
         return department;
@@ -159,6 +195,10 @@ class CustomDataLayer {
                                     '#E1F5FE';
     }
 
+    getDepartmentColorGrades() {
+        return [0, 5, 10, 15, 20, 30, 45, 65];
+    }
+
     markerFillColor() {
         return "#000000"
     }
@@ -173,7 +213,7 @@ class CustomDataLayer {
             fillOpacity: 0,
         });
 
-        info.update(layer.feature.properties);
+        this.infoLabel.update(layer.feature.properties);
     }
 
     resetHighlight(e) {
@@ -183,16 +223,11 @@ class CustomDataLayer {
         if (!turf.inside(point, polygon)) {
             this.department_layer.resetStyle(e.target);
         }
-        info.update();
+        this.infoLabel.update();
     }
 
     zoomToFeature(e) {
         map.fitBounds(e.target.getBounds());
-    }
-
-    onDepartmentClicked(e){
-        this.moveViewTo(e).bind(this);
-        map.addLayer(this.markerCluster);
     }
 
     moveViewTo(e) {
@@ -209,6 +244,13 @@ class CustomDataLayer {
 
     getDataType() {
         return "dataPoint";
+    }
+
+
+    updateInfoLabel(props) {
+        this._div.innerHTML = '<h4>DataPoints density</h4>' + (props ?
+            '<b>' + props.nom + '</b><br />' + props.density + ' datapoints</sup>'
+            : 'Hover over a department');
     }
 }
 
@@ -233,9 +275,20 @@ class ClubsLayer extends CustomDataLayer {
                                     '#E1F5FE';
     }
 
+    getDepartmentColorGrades() {
+        return [0, 5, 10, 15, 20, 30, 45, 65];
+    }
+
     markerFillColor() {
         return "#0D47A1"
     }
+
+    updateInfoLabel(props) {
+        this._div.innerHTML = '<h4>Clubs density</h4>' + (props ?
+            '<b>' + props.nom + '</b><br />' + props.density + ' clubs</sup>'
+            : 'Hover over a department');
+    }
+
 }
 
 class TournamentsLayer extends CustomDataLayer {
@@ -259,7 +312,17 @@ class TournamentsLayer extends CustomDataLayer {
                                     '#FFE082';
     }
 
+    getDepartmentColorGrades() {
+        return [0, 5, 10, 15, 20, 30, 45, 65];
+    }
+
     markerFillColor() {
         return '#E65100'
+    }
+
+    updateInfoLabel(props) {
+        this._div.innerHTML = '<h4>Tournaments density</h4>' + (props ?
+            '<b>' + props.nom + '</b><br />' + props.density + ' tournaments</sup>'
+            : 'Hover over a department');
     }
 }
