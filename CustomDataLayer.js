@@ -67,7 +67,7 @@ class CustomDataLayer {
                 departments,
                 {
                     style: this.departmentStyle.bind(this),
-                    onEachFeature: this.onEachFeature.bind(this)
+                    onEachFeature: this.onEachDepartmentFeature.bind(this)
                 }
             );
         });
@@ -202,11 +202,17 @@ class CustomDataLayer {
         return "#000000"
     }
 
-    highlightFeature(e) {
+    onMouseOverDepartment(e) {
         let layer = e.target;
         let dep_code = layer.feature.properties.code;
 
-        this.department_layer.eachLayer(l => this.department_layer.resetStyle(l))
+        this.department_layer.eachLayer(l => {
+            this.department_layer.resetStyle(l);
+        });
+        if(map.getZoom() < CLUSTER_VISIBILITY_ZOOM ){
+            layer.openPopup();
+        }
+
         layer.setStyle({
             dashArray: '',
             fillOpacity: 0,
@@ -215,7 +221,9 @@ class CustomDataLayer {
         this.infoLabel.update(layer.feature.properties);
     }
 
-    resetHighlight(e) {
+    onMouseOutDepartment(e) {
+        let layer = e.target;
+        layer.closePopup();
         let polygon = e.target.toGeoJSON();
         let point = turf.point([e.latlng.lng, e.latlng.lat]);
 
@@ -225,7 +233,9 @@ class CustomDataLayer {
         this.infoLabel.update();
     }
 
-    zoomToFeature(e) {
+    onClickDepartment(e) {
+        let layer = e.target;
+        layer.closePopup();
         map.fitBounds(e.target.getBounds());
     }
 
@@ -233,11 +243,17 @@ class CustomDataLayer {
         map.setView(e.latlng);
     }
 
-    onEachFeature(feature, layer) {
+    onEachDepartmentFeature(feature, layer) {
+        if (feature.properties) {
+            const popupHTML = `<b>${feature.properties.nom}</b>`
+                +`: ${feature.properties.density}`
+                +` ${this.getDataType()}s.`;
+            layer.bindPopup(popupHTML, {closeButton: false, offset: L.point(0, 0)});
+        }
         layer.on({
-            mouseover: this.highlightFeature.bind(this),
-            mouseout: this.resetHighlight.bind(this),
-            click: this.zoomToFeature.bind(this)
+            mouseover: this.onMouseOverDepartment.bind(this),
+            mouseout: this.onMouseOutDepartment.bind(this),
+            click: this.onClickDepartment.bind(this)
         });
     }
 
