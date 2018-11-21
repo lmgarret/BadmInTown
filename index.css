@@ -48,6 +48,9 @@ html, body {
     background-clip: padding-box;
     font-size: 15px;
     cursor: pointer;
+    clear: both;
+    float: left;
+    margin-top: 2px;
 }
 .btn:hover {
     background-color: #f4f4f4;
@@ -56,6 +59,21 @@ html, body {
 .btn-france{
     padding-top: 2px;
     text-indent: -1px;
+}
+
+.btn-group-vertical{
+    margin-top: 10px;
+    margin-left: 10px;
+}
+
+.btn-group-first{
+    border-radius: 4px 4px 0px 0px;
+}
+
+.btn-group-last{
+    margin-top: -2px;
+    border-radius: 0px 0px 4px 4px;
+    border-top: none;
 }
 
 .marker-cluster {

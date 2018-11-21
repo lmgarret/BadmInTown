@@ -49,19 +49,23 @@ function create_map() {
 }
 
 function createLeftControls() {
+    const htmlFranceButton = '<button type="button" class="btn btn-group-first btn-france" id="franceButton">'+
+        '   <img src="svg/fr.svg" alt="fr"  width="15" height="15" >'+
+        '</button>';
+    const htmlToggleButtonClubs = '<button type="button" class="btn btn-group-last" id="toggleButton">' +
+        '   <i class="fa fa-home"></i>'+
+        '</button>';
+    const htmlToggleButtonTournaments = '<button type="button" class="btn btn-group-last" id="toggleButton">' +
+        '   <i class="fa fa-trophy"></i>'+
+        '</button>';
+
     let buttons;
     buttons = L.control.custom({
         position: 'topleft',
-        content: '<button type="button" class="leaflet-control btn btn-default" id="toggleButton">' +
-            '    <i class="fa fa-home"></i>'+
-            '</button>'+
-            '<button type="button" class="btn btn-france" id="franceButton">'+
-            '    <img src="svg/fr.svg" alt="fr"  width="15" height="15" >',
+        content: htmlFranceButton + htmlToggleButtonClubs,
         classes: 'btn-group-vertical btn-group-sm',
         style:
             {
-                margin: '0px',
-                padding: '0px 0 0 0',
                 opacity: '1',
             },
         datas:
@@ -76,13 +80,11 @@ function createLeftControls() {
                             if (clubsLayer.visible) {
                                 clubsLayer.hide();
                                 tournamentsLayer.show();
-                                buttons.container.innerHTML = '<button type="button" class="leaflet-control btn btn-default leaflet-control" id="toggleButton">' +
-                                    '    <i class="fa fa-trophy"></i>';
+                                buttons.container.innerHTML = htmlFranceButton + htmlToggleButtonTournaments;
                             } else if (tournamentsLayer.visible) {
                                 clubsLayer.show();
                                 tournamentsLayer.hide();
-                                buttons.container.innerHTML = '<button type="button" class="leaflet-control btn btn-default" id="toggleButton">' +
-                                    '    <i class="fa fa-home"></i>';
+                                buttons.container.innerHTML = htmlFranceButton + htmlToggleButtonClubs;
 
                             } else {
                                 console.log("ToggleControl: error onclick.");
