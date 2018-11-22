@@ -499,8 +499,10 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      * Updates the innerHTML of a tab pane
      *
      * @param {String} [id] the id of the tab
+     * @param {String} [innerHTML] html to be set
+     * @param {String} [title] optionnal, title for the header
      */
-    updatePaneHTML: function(id,innerHTML) {
+    updatePaneHTML: function(id, innerHTML, title) {
         let tab, pane;
 
         for (var i = 0; i < this._panes.length; i++) {
@@ -523,11 +525,13 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         let hasCloseButton = pane.querySelectorAll('.leaflet-sidebar-close').length > 0;
 
         let content = '';
-        if (tab.title)
+        if(title){
+            content += '<h1 class="leaflet-sidebar-header">' + title;
+        }else if (tab.title)
             content += '<h1 class="leaflet-sidebar-header">' + tab.title;
         if (hasCloseButton)
             content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>';
-        if (tab.title)
+        if (title || tab.title)
             content += '</h1>';
         pane.innerHTML = content + innerHTML;
 
