@@ -11,6 +11,13 @@ class CustomDataLayer {
         this.totalDepartments = 101;
 
         this.infoLabel = L.control();
+        this.sidebarPanelButton = {
+            id: 'dataPanel',                     // UID, used to access the panel
+            tab: '<i class="fa fa-question" style="color: black;"></i>',  // content can be passed as HTML string,
+            //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
+            title: 'Data',              // an optional pane header
+            button: toggleLayerButton
+        };
         this.infoLabel.onAdd = function (map) {
             this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
             this.update();
@@ -324,11 +331,22 @@ class CustomDataLayer {
             this.department_layer.resetStyle(l);
         });
     }
+
+    getSideBarPanelButton() {
+        return this.sidebarPanelButton;
+    }
 }
 
 class ClubsLayer extends CustomDataLayer {
     constructor() {
         super("data/Club_geo.csv");
+        this.sidebarPanelButton = {
+            id: 'clubsPanel',                     // UID, used to access the panel
+            tab: '<i class="fa fa-home" style="color: black;"></i>',  // content can be passed as HTML string,
+            //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
+            title: 'Clubs',              // an optional pane header
+            button: toggleLayerButton
+        };
     }
 
     getDataType() {
@@ -365,6 +383,13 @@ class ClubsLayer extends CustomDataLayer {
 class TournamentsLayer extends CustomDataLayer {
     constructor() {
         super("data/Tournament.csv");
+        this.sidebarPanelButton = {
+            id: 'tournamentsPanel',                     // UID, used to access the panel
+            tab: '<i class="fa fa-trophy" style="color: black;"></i>',  // content can be passed as HTML string,
+            //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
+            title: 'Tournaments',              // an optional pane header
+            button: toggleLayerButton
+        };
     }
 
     getDataType() {

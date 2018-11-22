@@ -11,22 +11,6 @@ let franceLightLayer;
 let loadingBar;
 let sidebar;
 
-const clubsSidebarPanel = {
-    id: 'clubsPanel',                     // UID, used to access the panel
-    tab: '<i class="fa fa-home" style="color: black;"></i>',  // content can be passed as HTML string,
-    //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
-    title: 'Clubs',              // an optional pane header
-    button: toggleLayerButton
-};
-
-const tournamentsSidebarPanel = {
-    id: 'tournamentsPanel',                     // UID, used to access the panel
-    tab: '<i class="fa fa-trophy" style="color: black;"></i>',  // content can be passed as HTML string,
-    //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
-    title: 'Clubs',              // an optional pane header
-    button: toggleLayerButton
-};
-
 main();
 
 function main() {
@@ -36,7 +20,7 @@ function main() {
             let promiseClubs = clubsLayer.loadDataPoints(map);
 
             Promise.all([promiseClubs]).then(() => {
-                createLeftControls();
+                sidebar.addPanel(clubsLayer.getSideBarPanelButton());
                 clubsLayer.show();
             });
         });
@@ -50,14 +34,20 @@ function create_map() {
         maxZoom: 13,
     }).setView(INITIAL_COORD, INITIAL_ZOOM);
     map._layersMaxZoom = 13;
+
+    createUI()
+
+    return loadBaseLayers();
+}
+
+function createUI(){
+
     sidebar = L.control.sidebar({
         autopan: false,       // whether to maintain the centered map point when opening the sidebar
         closeButton: true,    // whether t add a close button to the panes
         container: 'sidebar', // the DOM container or #ID of a predefined sidebar container that should be used
         position: 'left',     // left or right
     }).addTo(map);
-
-    sidebar.addPanel(clubsSidebarPanel);
 
     loadingBar = L.control.custom({
         position: 'bottomleft',
@@ -71,7 +61,46 @@ function create_map() {
             },
     });
 
-    return loadBaseLayers();
+    const htmlFranceButton = '<button type="button" class="btn btn-france" id="franceButton">' +
+        '   <img src="svg/fr.svg" alt="fr"  width="15" height="15" >' +
+        '</button>';
+
+    let buttons;
+    buttons = L.control.custom({
+        position: 'topleft',
+        content: htmlFranceButton,
+        classes: 'btn-group-vertical',
+        style:
+            {
+                opacity: 1,
+            },
+        datas:
+            {
+                'foo': 'bar',
+            },
+        events:
+            {
+                click: function (data) {
+                    switch (data.target.id) {
+                        case "franceButton":
+                            map.setView(INITIAL_COORD, INITIAL_ZOOM);
+                            activeLayer.deselectAllDepartments();
+                            break;
+                        default:
+                            break;
+
+                    }
+                },
+                dblclick: function (data) {
+                    console.log('wrapper div element dblclicked');
+                    //console.log(data);
+                },
+                contextmenu: function (data) {
+                    console.log('wrapper div element contextmenu');
+                    //console.log(data);
+                },
+            }
+    }).addTo(map);
 }
 
 function loadBaseLayers() {
@@ -102,66 +131,6 @@ function loadBaseLayers() {
     });
 }
 
-function createLeftControls() {
-    const htmlFranceButton = '<button type="button" class="btn btn-group-first btn-france" id="franceButton">' +
-        '   <img src="svg/fr.svg" alt="fr"  width="15" height="15" >' +
-        '</button>';
-    const htmlToggleButtonClubs = '<button type="button" class="btn btn-group-last" id="toggleButton">' +
-        '   <i class="fa fa-home" style="color:black"></i>' +
-        '</button>';
-    const htmlToggleButtonTournaments = '<button type="button" class="btn btn-group-last" id="toggleButton">' +
-        '   <i class="fa fa-trophy" style="color:black"></i>' +
-        '</button>';
-
-    let buttons;
-    buttons = L.control.custom({
-        position: 'topleft',
-        content: htmlFranceButton + htmlToggleButtonClubs,
-        classes: 'btn-group-vertical',
-        style:
-            {
-                opacity: 1,
-            },
-        datas:
-            {
-                'foo': 'bar',
-            },
-        events:
-            {
-                click: function (data) {
-                    switch (data.target.id) {
-                        case "toggleButton":
-                            if (clubsLayer.visible) {
-                                setActiveLayer(tournamentsLayer, [clubsLayer]);
-                                buttons.container.innerHTML = htmlFranceButton + htmlToggleButtonTournaments;
-                            } else if (tournamentsLayer.visible) {
-                                setActiveLayer(clubsLayer, [tournamentsLayer]);
-                                buttons.container.innerHTML = htmlFranceButton + htmlToggleButtonClubs;
-
-                            } else {
-                                console.log("ToggleControl: error onclick.");
-                            }
-                            break;
-                        case "franceButton":
-                            map.setView(INITIAL_COORD, INITIAL_ZOOM);
-                            activeLayer.deselectAllDepartments();
-                            break;
-                        default:
-                            break;
-
-                    }
-                },
-                dblclick: function (data) {
-                    console.log('wrapper div element dblclicked');
-                    //console.log(data);
-                },
-                contextmenu: function (data) {
-                    console.log('wrapper div element contextmenu');
-                    //console.log(data);
-                },
-            }
-    }).addTo(map);
-}
 function _onLoadStarted(){
     franceLightLayer.remove();
     loadingBar.addTo(map);
@@ -173,13 +142,6 @@ function _onLoadProgress() {
 
     if( percentage % 10 === 0){
         loadingBar.container.innerHTML = htmlLoadingBar(percentage);
-        //loadingBar.invalidateSize();
-        //map.removeControl(loadingBar);
-        //map.addControl(loadingBar);
-        //loadingBar.remove();
-        //loadingBar.addTo(map);
-        //loadingBar.redraw();
-        //map.redraw();
         console.log(`Loaded: ${percentage}`);
     }
     loadingBar.container.innerHTML = htmlLoadingBar(percentage);
@@ -208,12 +170,14 @@ function sleep (time) {
 function toggleLayerButton(event){
     if (clubsLayer.visible) {
         setActiveLayer(tournamentsLayer, [clubsLayer]);
+        //TODO modularize removal?
         sidebar.removePanel('clubsPanel');
-        sidebar.addPanel(tournamentsSidebarPanel);
+        sidebar.addPanel(tournamentsLayer.getSideBarPanelButton());
     } else if (tournamentsLayer.visible) {
         setActiveLayer(clubsLayer, [tournamentsLayer]);
+        //TODO modularize removal?
         sidebar.removePanel('tournamentsPanel');
-        sidebar.addPanel(clubsSidebarPanel);
+        sidebar.addPanel(clubsLayer.getSideBarPanelButton());
 
     } else {
         console.log("ToggleControl: error onclick.");
