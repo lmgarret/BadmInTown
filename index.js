@@ -49,18 +49,27 @@ function create_map() {
 
 function loadBaseLayers() {
     const positron = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
-        attribution: '©OpenStreetMap, ©CartoDB'
+        attribution: '©OpenStreetMap, ©CartoDB',
+        useCache: true,
+        crossOrigin: true,
+        cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
     }).addTo(map);
 
-    return d3.json('geojson/france_shape.geojson').then(geoJSON => {
+    return d3.json('geojson/france_shape_hd.geojson').then(geoJSON => {
         franceLightLayer = L.TileLayer.boundaryCanvas('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
             attribution: '©OpenStreetMap, ©CartoDB',
             boundary: geoJSON,
+            useCache: true,
+            crossOrigin: true,
+            cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
         });
 
         map.createPane('labels');
         const positronLabels = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png', {
             attribution: '©OpenStreetMap, ©CartoDB',
+            useCache: true,
+            crossOrigin: true,
+            cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
             pane: 'labels'
         }).addTo(map);
     });

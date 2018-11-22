@@ -13,5 +13,7 @@
     <orderEntry type="library" name="leaflet.markercluster" level="application" />
     <orderEntry type="library" name="turf" level="application" />
     <orderEntry type="library" name="bootstrap" level="application" />
+    <orderEntry type="library" name="pouchdb" level="application" />
+    <orderEntry type="library" name="L.TileLayer.PouchDBCached" level="application" />
   </component>
 </module>
