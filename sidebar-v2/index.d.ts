@@ -38,7 +38,7 @@ declare module 'leaflet' {
             addTo(map: L.Map): this;
             removeFrom(map: L.Map): this;
 
-            open(id: string): this;
+            open(id: string,target:L.latLng): this;
             close(): this;
 
             addPanel(data: PanelOptions): this;

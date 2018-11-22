@@ -197,7 +197,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      * @param {string} id - The ID of the tab to show (without the # character)
      * @returns {L.Control.Sidebar}
      */
-    open: function(id) {
+    open: function(id, target) {
         var i, child, tab;
 
         // If panel is disabled, stop right here
@@ -229,7 +229,18 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         if (L.DomUtil.hasClass(this._container, 'collapsed')) {
             this.fire('opening');
             L.DomUtil.removeClass(this._container, 'collapsed');
-            if (this.options.autopan) this._panMap('open');
+
+            if (this.options.autopan){
+                if (target){
+                    this.moveViewTo(target,"open");
+                }else{
+                    this._panMap('open');
+                }
+            }
+        } else {
+            if (target){
+                this.moveViewTo(target,"open");
+            }
         }
 
         return this;
@@ -544,6 +555,11 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         this._map.panBy([panWidth, 0], { duration: 0.5 });
    },
 
+    /**
+     * Moves the map to the point with the given
+     * @param latlng
+     * @param openClose
+     */
    moveViewTo: function(latlng, openClose){
        let panWidth = Number.parseInt(L.DomUtil.getStyle(this._container, 'max-width')) / 2;
        if (

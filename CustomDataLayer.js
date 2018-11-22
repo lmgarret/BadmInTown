@@ -310,12 +310,8 @@ class CustomDataLayer {
 
     onDataPointClicked(dataPoint){
         return (e) => {
-            map.once("moveend zoomend", () => {
-                sidebar.open("infoPane");
-                //sidebar._panMap("open");
-                sidebar.updatePaneHTML("infoPane", `${dataPoint.name}`);
-            });
-            sidebar.moveViewTo(e.latlng,"open");
+            sidebar.updatePaneHTML("infoPane", `${dataPoint.name}`);
+            sidebar.open("infoPane",e.latlng);
         }
     }
 
