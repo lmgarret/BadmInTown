@@ -1,5 +1,21 @@
-const FRANCE_GEOJSON_PATH = "geojson/france_departements_all_low.geojson";
+let FRANCE_GEOJSON_PATH = "geojson/france_departements_all_low.geojson";
 const CLUSTER_VISIBILITY_ZOOM = 8;
+
+
+
+switch(window.location.protocol) {
+    case 'file:':
+        //dev file, lower quality thus faster loading times
+        FRANCE_GEOJSON_PATH = "geojson/france_departements_all_dev.geojson";
+        break;
+    case 'http:':
+    case 'https:':
+    default:
+        FRANCE_GEOJSON_PATH = "geojson/france_departements_all_low.geojson";
+        break;
+}
+
+
 
 class CustomDataLayer {
 
@@ -184,7 +200,7 @@ class CustomDataLayer {
             weight: 0 //stroke width
         }).bindPopup(`${dataPoint.name}`);
         marker.on({
-            click: this.moveViewTo
+            click: this.onDataPointClicked(dataPoint).bind(this),
         });
         return marker;
     }
@@ -289,6 +305,18 @@ class CustomDataLayer {
             dashArray: '',
             fillOpacity: 0,
         });
+        sidebar.close("infoPane");
+    }
+
+    onDataPointClicked(dataPoint){
+        return (e) => {
+            map.once("moveend zoomend", () => {
+                sidebar.open("infoPane");
+                //sidebar._panMap("open");
+                sidebar.updatePaneHTML("infoPane", `${dataPoint.name}`);
+            });
+            sidebar.moveViewTo(e.latlng,"open");
+        }
     }
 
     moveViewTo(e) {

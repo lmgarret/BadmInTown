@@ -47,6 +47,10 @@ declare module 'leaflet' {
             enablePanel(id: string): this;
             disablePanel(id: string): this;
 
+            updatePaneHTML(id: string, innerHTML: string): this;
+
+            moveViewTo(latlng:L.latLng,openClose:string): this;
+
             on(type: SidebarEvents, fn: L.LeafletEventHandlerFn, context?: any): this;
             on(eventMap: SidebarEventHandlerFnMap): this;
         }

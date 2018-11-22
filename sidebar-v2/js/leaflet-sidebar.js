@@ -485,6 +485,52 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
     },
 
     /**
+     * Updates the innerHTML of a tab pane
+     *
+     * @param {String} [id] the id of the tab
+     */
+    updatePaneHTML: function(id,innerHTML) {
+        let tab, pane;
+
+        for (var i = 0; i < this._panes.length; i++) {
+            if (this._panes[i].id === id){
+                pane = this._panes[i];
+            }
+        }
+
+        for (var i = 0; i < this._tabitems.length; i++) {
+            if (this._tabitems[i]._id === id){
+                tab = this._tabitems[i];
+            }
+        }
+
+        if(!tab || !pane){
+            console.log(`updatePaneHTML: no corresponding tab or pane for id ${id}`);
+            return;
+        }
+
+        let hasCloseButton = pane.querySelectorAll('.leaflet-sidebar-close').length > 0;
+
+        let content = '';
+        if (tab.title)
+            content += '<h1 class="leaflet-sidebar-header">' + tab.title;
+        if (hasCloseButton)
+            content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>';
+        if (tab.title)
+            content += '</h1>';
+        pane.innerHTML = content + innerHTML;
+
+
+        // Save references to close button & register click listener
+        let closeButtons = pane.querySelectorAll('.leaflet-sidebar-close');
+        if (closeButtons.length) {
+            // select last button, because thats rendered on top
+            this._closeButtons.push(closeButtons[closeButtons.length - 1]);
+            this._closeClick(closeButtons[closeButtons.length - 1], 'on');
+        }
+    },
+
+    /**
      * Helper for autopan: Pans the map for open/close events
      *
      * @param {String} [openClose] The behaviour to enact ('open' | 'close')
@@ -496,6 +542,25 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
             openClose === 'close' && this.options.position === 'right'
         ) panWidth *= -1;
         this._map.panBy([panWidth, 0], { duration: 0.5 });
+   },
+
+   moveViewTo: function(latlng, openClose){
+       let panWidth = Number.parseInt(L.DomUtil.getStyle(this._container, 'max-width')) / 2;
+       if (
+           openClose === 'open' && this.options.position === 'left' ||
+           openClose === 'close' && this.options.position === 'right'
+       ) panWidth *= -1;
+
+       let center = map.project(latlng);
+       center = new L.point(center.x+panWidth,center.y+0);
+       let target = map.unproject(center);
+       map.panTo(target);
+
+       /*let x = this._map.latLngToContainerPoint(latlng).x + panWidth;
+       let y = this._map.latLngToContainerPoint(latlng).y;
+       let point = this._map.containerPointToLatLng([x, y]);
+
+       this._map.setView(point, { padding: [panWidth,0],duration: 0.5 });*/
    }
 });
 

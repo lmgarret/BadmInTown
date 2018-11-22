@@ -10,7 +10,7 @@ let franceLightLayer;
 
 let loadingBar;
 let sidebar;
-
+let infoSidebarPane;
 main();
 
 function main() {
@@ -43,11 +43,19 @@ function create_map() {
 function createUI(){
 
     sidebar = L.control.sidebar({
-        autopan: false,       // whether to maintain the centered map point when opening the sidebar
+        //autopan: true,       // whether to maintain the centered map point when opening the sidebar
         closeButton: true,    // whether t add a close button to the panes
         container: 'sidebar', // the DOM container or #ID of a predefined sidebar container that should be used
         position: 'left',     // left or right
     }).addTo(map);
+
+    infoSidebarPane = {
+        id: 'infoPane',                     // UID, used to access the panel
+        tab: '<i class="fa fa-info"></i>',  // content can be passed as HTML string,
+        pane: "test",        // DOM elements can be passed, too
+        title: 'Info',              // an optional pane header
+    };
+    sidebar.addPanel(infoSidebarPane);
 
     loadingBar = L.control.custom({
         position: 'bottomleft',
