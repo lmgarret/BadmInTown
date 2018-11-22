@@ -1,8 +1,7 @@
 var gulp = require('gulp');
-var clean = require('gulp-clean');
 var csslint = require('gulp-csslint');
 var jshint = require('gulp-jshint');
-var minifyCSS = require('gulp-minify-css');
+var minifyCSS = require('gulp-clean-css');
 var sass = require('gulp-sass');
 var rename = require('gulp-rename');
 var uglify = require('gulp-uglify');
@@ -13,7 +12,7 @@ var basename = pkg.name + '-' + pkg.version;
 
 // SASS compilation
 gulp.task('sass', function () {
-    gulp.src('scss/*sidebar.scss')
+    return gulp.src('scss/*sidebar.scss')
         .pipe(sass().on('error', sass.logError))
         .pipe(gulp.dest('css'));
 });
@@ -31,10 +30,10 @@ gulp.task('lint:css', ['sass'], function() {
   return gulp.src('css/*sidebar.css')
     .pipe(csslint({
       'adjoining-classes': false,
-      'order-alphabetical': false,
       'box-sizing': false,
       'fallback-colors': false,
       'important': false,
+      'order-alphabetical': false,
       'regex-selectors': false,
     }))
     .pipe(csslint.formatter());
@@ -74,7 +73,7 @@ gulp.task('zip', ['minify'], function() {
 
 // Watch JS + CSS Files
 gulp.task('watch', ['lint', 'minify'], function(){
-  gulp.watch('js/*.js', ['lint:js', 'minify:js']);
+  gulp.watch('js/leaflet-sidebar.js', ['lint:js', 'minify:js']);
   gulp.watch('scss/*.scss', ['lint:css', 'minify:css']);
 });
 

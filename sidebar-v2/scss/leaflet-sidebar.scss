@@ -12,7 +12,7 @@ $tab-active-bg: #0074d9 !default;
 
 @import 'base';
 
-.sidebar {
+.leaflet-sidebar {
     box-shadow: $sidebar-shadow;
 
     &.leaflet-touch {
@@ -29,9 +29,10 @@ $tab-active-bg: #0074d9 !default;
     }
 }
 
-.sidebar-left {
+// move other controls aside from sidebar
+.leaflet-sidebar-left {
 
-    & ~ .sidebar-map .leaflet-left {
+    & ~ .leaflet-control-container .leaflet-left {
         @media(min-width:$threshold-sm) {
             transition: left $sidebar-transition;
         }
@@ -49,16 +50,16 @@ $tab-active-bg: #0074d9 !default;
         }
     }
 
-    &.collapsed ~ .sidebar-map .leaflet-left {
+    &.collapsed ~ .leaflet-control-container .leaflet-left {
         @media(min-width:$threshold-sm) {
             left: $tab-size + $sidebar-margins;
         }
     }
 }
 
-.sidebar-right {
+.leaflet-sidebar-right {
 
-    & ~ .sidebar-map .leaflet-right {
+    & ~ .leaflet-control-container .leaflet-right {
         @media(min-width:$threshold-sm) {
             transition: right $sidebar-transition;
         }
@@ -76,7 +77,7 @@ $tab-active-bg: #0074d9 !default;
         }
     }
 
-    &.collapsed ~ .sidebar-map .leaflet-right {
+    &.collapsed ~ .leaflet-control-container .leaflet-right {
         @media(min-width:$threshold-sm) {
             right: $tab-size + $sidebar-margins;
         }

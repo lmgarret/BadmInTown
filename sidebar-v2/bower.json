@@ -1,19 +1,15 @@
 {
-  "name": "sidebar-v2",
-  "version": "0.3.1",
-  "homepage": "https://github.com/Turbo87/sidebar-v2",
+  "name": "leaflet-sidebar-v2",
+  "version": "1.0.0",
+  "homepage": "https://github.com/nickpeihl/leaflet-sidebar-v2",
   "authors": [
-    "Tobias Bieniek <tobias.bieniek@qsc.de>"
+    "Tobias Bieniek <tobias.bieniek@qsc.de>",
+    "Nick Peihl <nickpeihl@gmail.com>"
   ],
-  "description": "A responsive sidebar for mapping libraries like Leaflet or OpenLayers",
+  "description": "A responsive sidebar just for Leaflet",
   "main": [
-    "css/gmaps-sidebar.css",
     "css/leaflet-sidebar.css",
-    "css/ol2-sidebar.css",
-    "css/ol3-sidebar.css",
-    "js/jquery-sidebar.js",
-    "js/leaflet-sidebar.js",
-    "js/ol3-sidebar.js"
+    "js/leaflet-sidebar.js"
   ],
   "keywords": [
     "gis",

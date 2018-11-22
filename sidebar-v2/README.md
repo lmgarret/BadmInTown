@@ -1,42 +1,149 @@
-# sidebar-v2
+# leaflet-sidebar-v2
 
-A responsive sidebar for mapping libraries like [Leaflet](#leaflet) or [OpenLayers](#openlayers-3).
+A responsive sidebar _just_ for [Leaflet](http://leafletjs.com/). A fork of [sidebar-v2](http://turbo87.github.io/sidebar-v2) that only contains the necessary ingredients for use in Leaflet and provides enhanced functionality.
 
-It is more or less a successor of the [leaflet-sidebar](https://github.com/turbo87/leaflet-sidebar/) plugin, thus the `v2` suffix.
+![Demo](doc/leaflet-sidebar-v2.gif)
 
-<a href="https://flattr.com/submit/auto?user_id=turbo&url=https%3A%2F%2Fgithub.com%2FTurbo87%2Fsidebar-v2" target="_blank"><img src="https://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0"></a>
+## Why the Fork?
+- only supports leaflet (0.x and 1.x) to maintain a smaller codebase and support more features
+- compatibility with bootstrap (no generic `.sidebar` class)
+- provides a npm package `leaflet-sidebar-v2` with `main` and `style` fields in [`package.json`](package.json)
+- new features based on leaflet.js
+    - JS API for panel modification
+    - "autopan" feature, moving the map content next to the sidebar content
+    
+## Examples
+ - [Simple example](http://www.npeihl.com/leaflet-sidebar-v2/examples/index.html)
+ - [Autopanning of Map](http://www.npeihl.com/leaflet-sidebar-v2/examples/autopan.html)
+ - [Right aligned](http://www.npeihl.com/leaflet-sidebar-v2/examples/position-right.html)
+ - [Dynamic panel content](http://www.npeihl.com/leaflet-sidebar-v2/examples/leaflet-api.html)
+ - [Leaflet v0.7 example](http://www.npeihl.com/leaflet-sidebar-v2/examples/leaflet-0.7.html)
+ - [Adapt Sidebar to Map container size](http://www.npeihl.com/leaflet-sidebar-v2/examples/halfheight.html)
 
-![Demo](doc/sidebar-v2.gif)
+## Usage
 
+### API
+leaflet-sidebar-v2 provides a simple API to dynamically modify the sidebar. All functions may be chained.
 
-## [Leaflet](http://leafletjs.com/)
+#### creation
+The parameters object is fully optional. The default values are shown:
 
-![Sidebar collapsed](doc/leaflet-1.png) ![Sidebar extended](doc/leaflet-2.png)
+```js
+var sidebar = L.control.sidebar({
+    autopan: false,       // whether to maintain the centered map point when opening the sidebar
+    closeButton: true,    // whether t add a close button to the panes
+    container: 'sidebar', // the DOM container or #ID of a predefined sidebar container that should be used
+    position: 'left',     // left or right
+}).addTo(map);
+```
 
-Example code at [`examples/index.html`](examples/index.html) ([Preview](http://turbo87.github.io/sidebar-v2/examples/index.html))
+#### modification
 
+```js
+/* add a new panel */
+var panelContent = {
+    id: 'userinfo',                     // UID, used to access the panel
+    tab: '<i class="fa fa-gear"></i>',  // content can be passed as HTML string,
+    pane: someDomNode.innerHTML,        // DOM elements can be passed, too
+    title: 'Your Profile',              // an optional pane header
+    position: 'bottom'                  // optional vertical alignment, defaults to 'top'
+};
+sidebar.addPanel(panelContent);
 
-## [OpenLayers 3](http://openlayers.org/)
+/* add an external link */
+sidebar.addPanel({
+    id: 'ghlink',
+    tab: '<i class="fa fa-github"></i>',
+    button: 'https://github.com/nickpeihl/leaflet-sidebar-v2',
+});
 
-![Sidebar collapsed](doc/ol3-1.png) ![Sidebar extended](doc/ol3-2.png)
+/* add an button with click listener */
+sidebar.addPanel({
+    id: 'click',
+    tab: '<i class="fa fa-info"></i>',
+    button: function (event) { console.log(event); }
+});
 
-Example code at [`examples/ol3.html`](examples/ol3.html) ([Preview](http://turbo87.github.io/sidebar-v2/examples/ol3.html))
+/* remove a panel */
+sidebar.removePanel('userinfo');
 
+/* en- / disable a panel */
+sidebar.disablePanel('userinfo');
+sidebar.enablePanel('userinfo');
+```
 
-## [OpenLayers 2](http://openlayers.org/two/)
+#### open / close / show content
+```js
+/* open a panel */
+sidebar.open('userinfo');
 
-![Sidebar collapsed](doc/ol2-1.png) ![Sidebar extended](doc/ol2-2.png)
+/* close the sidebar */
+sidebar.close();
+```
 
-Example code at [`examples/ol2.html`](examples/ol2.html) ([Preview](http://turbo87.github.io/sidebar-v2/examples/ol2.html))
+#### remove sidebar
 
+```js
+/* remove the sidebar (and destroy the sidebar container!) */
+sidebar.remove();
+sidebar.removeFrom(map); // leaflet 0.x
+```
 
-## [Google Maps](https://developers.google.com/maps/)
+### markup
+If you use the sidebar with static content only, you can predefine content in HTML:
 
-![Sidebar collapsed](doc/gmaps-1.png) ![Sidebar extended](doc/gmaps-2.png)
+```html
+<div id="sidebar" class="leaflet-sidebar collapsed">
+    <!-- Nav tabs -->
+    <div class="leaflet-sidebar-tabs">
+        <ul role="tablist"> <!-- top aligned tabs -->
+            <li><a href="#home" role="tab"><i class="fa fa-bars"></i></a></li>
+            <li class="disabled"><a href="#messages" role="tab"><i class="fa fa-envelope"></i></a></li>
+            <li><a href="#profile" role="tab"><i class="fa fa-user"></i></a></li>
+        </ul>
 
-Example code at [`examples/gmaps.html`](examples/gmaps.html) ([Preview](http://turbo87.github.io/sidebar-v2/examples/gmaps.html))
+        <ul role="tablist"> <!-- bottom aligned tabs -->
+            <li><a href="#settings" role="tab"><i class="fa fa-gear"></i></a></li>
+        </ul>
+    </div>
+
+    <!-- Tab panes -->
+    <div class="leaflet-sidebar-content">
+        <div class="leaflet-sidebar-pane" id="home">
+            <h1 class="leaflet-sidebar-header">
+                sidebar-v2
+                <div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div>
+            </h1>
+            <p>A responsive sidebar for mapping libraries</p>
+        </div>
+
+        <div class="leaflet-sidebar-pane" id="messages">
+            <h1 class="leaflet-sidebar-header">Messages<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        </div>
+
+        <div class="leaflet-sidebar-pane" id="profile">
+            <h1 class="leaflet-sidebar-header">Profile<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        </div>
+    </div>
+</div>
+```
+
+You still need to initialize the sidebar (see API.creation)
+
+### Events
+
+The sidebar fires 3 types of events:
+`opening`, `closing`, and `content`.
+The latter has a payload including the id of the activated content div.
+
+You can listen for them like this:
+```js
+sidebar.on('content', function(e) {
+    // e.id contains the id of the opened panel
+})
+```
 
 
 ## License
 
-sidebar-v2 is free software, and may be redistributed under the [MIT license](LICENSE).
+leaflet-sidebar-v2 is free software, and may be redistributed under the [MIT license](LICENSE).

@@ -9,6 +9,23 @@ let activeLayer = undefined;
 let franceLightLayer;
 
 let loadingBar;
+let sidebar;
+
+const clubsSidebarPanel = {
+    id: 'clubsPanel',                     // UID, used to access the panel
+    tab: '<i class="fa fa-home" style="color: black;"></i>',  // content can be passed as HTML string,
+    //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
+    title: 'Clubs',              // an optional pane header
+    button: toggleLayerButton
+};
+
+const tournamentsSidebarPanel = {
+    id: 'tournamentsPanel',                     // UID, used to access the panel
+    tab: '<i class="fa fa-trophy" style="color: black;"></i>',  // content can be passed as HTML string,
+    //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
+    title: 'Clubs',              // an optional pane header
+    button: toggleLayerButton
+};
 
 main();
 
@@ -33,7 +50,14 @@ function create_map() {
         maxZoom: 13,
     }).setView(INITIAL_COORD, INITIAL_ZOOM);
     map._layersMaxZoom = 13;
-    var sidebar = L.control.sidebar('sidebar').addTo(map);
+    sidebar = L.control.sidebar({
+        autopan: false,       // whether to maintain the centered map point when opening the sidebar
+        closeButton: true,    // whether t add a close button to the panes
+        container: 'sidebar', // the DOM container or #ID of a predefined sidebar container that should be used
+        position: 'left',     // left or right
+    }).addTo(map);
+
+    sidebar.addPanel(clubsSidebarPanel);
 
     loadingBar = L.control.custom({
         position: 'bottomleft',
@@ -179,6 +203,21 @@ function htmlLoadingBar(percentage) {
 
 function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+function toggleLayerButton(event){
+    if (clubsLayer.visible) {
+        setActiveLayer(tournamentsLayer, [clubsLayer]);
+        sidebar.removePanel('clubsPanel');
+        sidebar.addPanel(tournamentsSidebarPanel);
+    } else if (tournamentsLayer.visible) {
+        setActiveLayer(clubsLayer, [tournamentsLayer]);
+        sidebar.removePanel('tournamentsPanel');
+        sidebar.addPanel(clubsSidebarPanel);
+
+    } else {
+        console.log("ToggleControl: error onclick.");
+    }
 }
 
 function setActiveLayer(layer, otherLayers = []){
