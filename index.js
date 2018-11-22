@@ -82,10 +82,10 @@ function createLeftControls() {
         '   <img src="svg/fr.svg" alt="fr"  width="15" height="15" >' +
         '</button>';
     const htmlToggleButtonClubs = '<button type="button" class="btn btn-group-last" id="toggleButton">' +
-        '   <i class="fa fa-home"></i>' +
+        '   <i class="fa fa-home" style="color:black"></i>' +
         '</button>';
     const htmlToggleButtonTournaments = '<button type="button" class="btn btn-group-last" id="toggleButton">' +
-        '   <i class="fa fa-trophy"></i>' +
+        '   <i class="fa fa-trophy" style="color:black"></i>' +
         '</button>';
 
     let buttons;
