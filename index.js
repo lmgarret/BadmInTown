@@ -1,3 +1,5 @@
+const INITIAL_COORD = [46.43, 2.30];
+const INITIAL_ZOOM = 5.5;
 let map;
 
 let clubsLayer = new ClubsLayer();
@@ -29,7 +31,7 @@ function create_map() {
     map = L.map('map', {
         minZoom: 0,
         maxZoom: 13,
-    }).setView([46.43, 2.30], 5.5);
+    }).setView(INITIAL_COORD, INITIAL_ZOOM);
     map._layersMaxZoom = 13;
 
     loadingBar = L.control.custom({
@@ -116,7 +118,8 @@ function createLeftControls() {
                             }
                             break;
                         case "franceButton":
-                            map.setView([46.43, 2.30], 5.5);
+                            map.setView(INITIAL_COORD, INITIAL_ZOOM);
+                            activeLayer.deselectAllDepartments();
                             break;
                         default:
                             break;
