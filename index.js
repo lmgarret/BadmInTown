@@ -33,6 +33,7 @@ function create_map() {
         maxZoom: 13,
     }).setView(INITIAL_COORD, INITIAL_ZOOM);
     map._layersMaxZoom = 13;
+    var sidebar = L.control.sidebar('sidebar').addTo(map);
 
     loadingBar = L.control.custom({
         position: 'bottomleft',

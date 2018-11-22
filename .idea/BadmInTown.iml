@@ -15,5 +15,6 @@
     <orderEntry type="library" name="bootstrap" level="application" />
     <orderEntry type="library" name="pouchdb" level="application" />
     <orderEntry type="library" name="L.TileLayer.PouchDBCached" level="application" />
+    <orderEntry type="library" name="leaflet-sidebar" level="application" />
   </component>
 </module>
