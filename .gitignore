@@ -106,3 +106,4 @@ venv.bak/
 
 # NPM package files
 node_modules
+.idea/workspace.xml
