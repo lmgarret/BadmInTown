@@ -241,6 +241,8 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
                 }else{
                     this._panMap('open');
                 }
+            } else if (target){
+                this.moveViewTo(target,"open");
             }
         } else {
             if (target){
