@@ -22,6 +22,7 @@ function main() {
             Promise.all([promiseClubs]).then(() => {
                 sidebar.addPanel(clubsLayer.getSideBarPanelButton());
                 clubsLayer.show();
+                sidebar.open("home");
             });
         });
 
@@ -183,6 +184,14 @@ function sleep (time) {
 }
 
 function toggleLayerButton(event){
+    sidebar.close();
+    let title = "Info";
+    let html = "Click on a data point to get more info about it.";
+    let paneOptions = {
+        title: title,
+    }
+    sidebar.updatePaneHTML("infoPane", html,paneOptions);
+
     if (clubsLayer.visible) {
         setActiveLayer(tournamentsLayer, [clubsLayer]);
         //TODO modularize removal?

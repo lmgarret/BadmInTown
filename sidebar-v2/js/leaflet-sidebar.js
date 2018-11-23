@@ -334,7 +334,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
                     content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>';
                 if (data.title)
                     content += '</h1>';
-                pane.innerHTML = content + data.pane;
+                pane.innerHTML = content + "<br>"+ data.pane;
             } else {
                 // pane is given as DOM object
                 pane = data.pane;
@@ -575,14 +575,14 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         }else if (tab.title) {
             content += '<h1 class="leaflet-sidebar-header">' + tab.title;
         }
-        if(options.locate.latlng){
+        if(options.locate && options.locate.latlng){
             content += '<span class="leaflet-sidebar-locate"><i class="fa fa-location-arrow "></i></span>';
         }
         if (hasCloseButton)
             content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>';
         if (options.title || tab.title)
             content += '</h1>';
-        pane.innerHTML = content + innerHTML;
+        pane.innerHTML = content + "<br>"+ innerHTML;
 
 
         // Save references to close button & register click listener
