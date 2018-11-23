@@ -382,7 +382,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
                 this._tabClick(tab, 'off');
 
                 tab.remove();
-                this._tabitems = this._tabitems.slice(i, 1);
+                this._tabitems.splice(i, 1);
                 break;
             }
         }
@@ -396,7 +396,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
                 }
 
                 pane.remove();
-                this._panes = this._panes.slice(i, 1);
+                this._panes.splice(i, 1);
 
                 break;
             }
