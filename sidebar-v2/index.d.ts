@@ -47,7 +47,7 @@ declare module 'leaflet' {
             enablePanel(id: string): this;
             disablePanel(id: string): this;
 
-            updatePaneHTML(id: string, innerHTML: string, title: string,latlng:L.latLng, zoom: number): this;
+            updatePaneHTML(id: string, innerHTML: string, options: Object): this;
 
             moveViewTo(latlng:L.latLng,openClose:string): this;
 

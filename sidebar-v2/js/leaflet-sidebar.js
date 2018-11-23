@@ -151,7 +151,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
             this._closeClick(this._closeButtons[i], 'off');
 
         for (i = 0; i < this._locateButtons.length; i++)
-            this._locateClick(this._locateButtons[i], 'off');
+            this._locateClick(this._locateButtons[i], 'off', this._locateButtons[i].options);
 
         return this;
     },
@@ -485,9 +485,22 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         }
     },
 
-    onLocateClick: function(latlng,zoom) {
+    /**
+     * Called when the locate button is clicked in the side pane
+     * @param latlng coordinates of the target ot set the view to
+     * @param zoom optional, zoom to be set
+     * @param callback optional, callback function called after moveing view
+     * @returns {Function}
+     */
+    onLocateClick: function(latlng,zoom,callback) {
         return () => {
+            map.once("moveend zoomend", () => {
+                if(callback){
+                    callback();
+                }
+            });
             this.moveViewTo(latlng,"open",zoom);
+
         }
     },
 
@@ -498,12 +511,13 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      *
      * @param {DOMelement} [locateButton]
      * @param {String} [on] 'on' or 'off'
+     * @param {Object} [options] contains the latlng of the target, an optional zoom and an optional callback
      */
-    _locateClick: function(locateButton, on, latlng,zoom) {
+    _locateClick: function(locateButton, on, options) {
         if (on === 'on') {
-            L.DomEvent.on(locateButton, 'click', this.onLocateClick(latlng,zoom), this);
+            L.DomEvent.on(locateButton, 'click', this.onLocateClick(options.latlng,options.zoom,options.callback).bind(this));
         } else {
-            L.DomEvent.off(locateButton, 'click', this.onCloseClick(latlng,zoom));
+            L.DomEvent.off(locateButton, 'click', this.onLocateClick(options.latlng,options.zoom,options.callback).bind(this));
         }
     },
 
@@ -530,8 +544,10 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      * @param {String} [title] optional, title for the header
      * @param {String} [latlng] optional, point to target
      * @param {String} [zoom] optional, zoom when targeting point
+     * @param {Object} [options] optional data, like title or locate object containing latlng of target, zoom target
+     * and callback when camera was moved.
      */
-    updatePaneHTML: function(id, innerHTML, title, latlng, zoom) {
+    updatePaneHTML: function(id, innerHTML, options) {
         let tab, pane;
 
         for (var i = 0; i < this._panes.length; i++) {
@@ -554,17 +570,17 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         let hasCloseButton = pane.querySelectorAll('.leaflet-sidebar-close').length > 0;
 
         let content = '';
-        if(title){
-            content += '<h1 class="leaflet-sidebar-header">' + title;
+        if(options.title){
+            content += '<h1 class="leaflet-sidebar-header">' + options.title;
         }else if (tab.title) {
             content += '<h1 class="leaflet-sidebar-header">' + tab.title;
         }
-        if(latlng){
+        if(options.locate.latlng){
             content += '<span class="leaflet-sidebar-locate"><i class="fa fa-location-arrow "></i></span>';
         }
         if (hasCloseButton)
             content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>';
-        if (title || tab.title)
+        if (options.title || tab.title)
             content += '</h1>';
         pane.innerHTML = content + innerHTML;
 
@@ -581,8 +597,10 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         let locateButtons = pane.querySelectorAll('.leaflet-sidebar-locate');
         if (locateButtons.length) {
             // select last button, because thats rendered on top
-            this._locateButtons.push(locateButtons[locateButtons.length - 1]);
-            this._locateClick(locateButtons[locateButtons.length - 1], 'on',latlng,zoom);
+            let locateButton = locateButtons[locateButtons.length - 1];
+            locateButton.options = options.locate;
+            this._locateButtons.push(locateButton);
+            this._locateClick(locateButton, 'on',locateButton.options);
         }
     },
 

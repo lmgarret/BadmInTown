@@ -199,8 +199,17 @@ class CustomDataLayer {
             fillOpacity: 0.8,
             weight: 0 //stroke width
         }).bindPopup(`${dataPoint.name}`);
+        let options = {
+            locate: {
+                callback: () => {
+                    if(!marker.getPopup().isOpen()){
+                        marker.openPopup();
+                    }
+                }
+            }
+        };
         marker.on({
-            click: this.onDataPointClicked(dataPoint).bind(this),
+            click: this.onDataPointClicked(dataPoint,options).bind(this),
         });
         return marker;
     }
@@ -308,13 +317,21 @@ class CustomDataLayer {
         sidebar.close("infoPane");
     }
 
-    onDataPointClicked(dataPoint){
+    onDataPointClicked(dataPoint, options){
         return (e) => {
             let title = this.getDataType();
             title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
             let html = `<b>Name:</b> ${dataPoint.name}(${dataPoint.short_name}) </br>`
                 + `<b>City:</b> ${dataPoint.city_name}`;
-            sidebar.updatePaneHTML("infoPane", html,title,e.latlng,map.getZoom());
+            let paneOptions = {
+                title: title,
+                locate: {
+                    latlng: e.latlng,
+                    zoom: map.getZoom(),
+                    callback: options.locate.callback
+                }
+            }
+            sidebar.updatePaneHTML("infoPane", html,paneOptions);
             sidebar.open("infoPane",e.latlng);
         }
     }
