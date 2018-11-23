@@ -59,7 +59,7 @@ function createUI(){
     infoSidebarPane = {
         id: 'infoPane',                     // UID, used to access the panel
         tab: '<i class="fa fa-info"></i>',  // content can be passed as HTML string,
-        pane: "test",        // DOM elements can be passed, too
+        pane: "Click on a data point to get more info about it.",        // DOM elements can be passed, too
         title: 'Info',              // an optional pane header
     };
     sidebar.addPanel(infoSidebarPane);

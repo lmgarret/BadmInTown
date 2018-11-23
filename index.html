@@ -13,10 +13,6 @@
             height: 100%;
             font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
         }
-        .lorem {
-            font-style: italic;
-            color: #AAA;
-        }
     </style>
 
     <!-- D3-->
@@ -72,8 +68,8 @@
     <div class="leaflet-sidebar-tabs">
         <ul role="tablist">
             <li><a href="#home" role="tab"><i class="fa fa-bars active"></i></a></li>
-            <li><a href="#profile" role="tab"><i class="fa fa-user"></i></a></li>
-            <li class="disabled"><a href="#messages" role="tab"><i class="fa fa-envelope"></i></a></li>
+            <!--<li><a href="#profile" role="tab"><i class="fa fa-user"></i></a></li>
+            <li class="disabled"><a href="#messages" role="tab"><i class="fa fa-envelope"></i></a></li>-->
         </ul>
 
         <ul role="tablist">
@@ -85,35 +81,26 @@
     <div class="leaflet-sidebar-content">
         <div class="leaflet-sidebar-pane" id="home">
             <h1 class="leaflet-sidebar-header">
-                sidebar-v2
+                BadmInTown
                 <span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>
             </h1>
 
-            <p>A responsive sidebar for the mapping library <a href="http://leafletjs.com/">Leaflet</a>.</p>
-            <p>Compatible with version 0.7 and 1.x (tested up to 1.2.0)</p>
+            <p>A Data Visualisation project using <a href="http://leafletjs.com/">Leaflet</a>.</p>
+            <p>This project shows some data about the badminton clubs and tournaments taking place in France.</p>
 
-            <h2>More examples</h2>
-            <ul>
-                <li><a href="sidebar-v2/examples/autopan.html">Autopanning of map</a></li>
-                <li><a href="sidebar-v2/examples/position-right.html">Right aligned</a></li>
-                <li><a href="sidebar-v2/examples/leaflet-api.html">Dynamic panel content using the JS API</a></li>
-                <li><a href="sidebar-v2/examples/leaflet-0.7.html">Proof that it works with leaflet 0.7 ;)</a></li>
-                <li><a href="sidebar-v2/examples/halfheight.html">The sidebar adapts to map container size</a></li>
-            </ul>
+            <h3>How to use</h3>
 
-            <p class="lorem">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
-            <p class="lorem">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
-            <p class="lorem">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
-            <p class="lorem">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
+            <p>You can click on department to gain focus on them and see the data points in details. Clicking on a data point yields supplementary information. If two or more data points have the exact same GPS coordinates, they are stacked in a cluster. You can open the cluster and this its points by clicking on it.</p>
+            <p>By default the map displays information about clubs, but you can toggle this by clicking on the <i class="fa fa-home"></i> (clubs) or <i class="fa fa-trophy"></i>(tournaments) buttons.</p>
         </div>
 
-        <div class="leaflet-sidebar-pane" id="profile">
+        <!--<div class="leaflet-sidebar-pane" id="profile">
             <h1 class="leaflet-sidebar-header">Profile<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
         </div>
 
         <div class="leaflet-sidebar-pane" id="messages">
             <h1 class="leaflet-sidebar-header">Messages<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
-        </div>
+        </div>-->
     </div>
 </div>
 
