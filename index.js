@@ -35,7 +35,14 @@ function create_map() {
     }).setView(INITIAL_COORD, INITIAL_ZOOM);
     map._layersMaxZoom = 13;
 
-    createUI()
+    //added function to setView with an offset in pixels after zooming
+    L.Map.prototype.setViewOffset = function (latlng, offset, targetZoom) {
+        let targetPoint = this.project(latlng, targetZoom).subtract(offset),
+            targetLatLng = this.unproject(targetPoint, targetZoom);
+        return this.setView(targetLatLng, targetZoom);
+    }
+
+    createUI();
 
     return loadBaseLayers();
 }

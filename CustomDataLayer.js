@@ -314,7 +314,7 @@ class CustomDataLayer {
             title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
             let html = `<b>Name:</b> ${dataPoint.name}(${dataPoint.short_name}) </br>`
                 + `<b>City:</b> ${dataPoint.city_name}`;
-            sidebar.updatePaneHTML("infoPane", html,title);
+            sidebar.updatePaneHTML("infoPane", html,title,e.latlng,map.getZoom());
             sidebar.open("infoPane",e.latlng);
         }
     }

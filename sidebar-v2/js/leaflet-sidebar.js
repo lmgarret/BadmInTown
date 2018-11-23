@@ -45,6 +45,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         this._tabitems = [];
         this._panes = [];
         this._closeButtons = [];
+        this._locateButtons = [];
 
         L.setOptions(this, Object.assign({}, options, deprecatedOptions));
         return this;
@@ -140,6 +141,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         this._tabitems = [];
         this._panes = [];
         this._closeButtons = [];
+        this._locateButtons = [];
 
         // Remove click listeners for tab & close buttons
         for (i = 0; i < this._tabitems.length; i++)
@@ -147,6 +149,9 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
 
         for (i = 0; i < this._closeButtons.length; i++)
             this._closeClick(this._closeButtons[i], 'off');
+
+        for (i = 0; i < this._locateButtons.length; i++)
+            this._locateClick(this._locateButtons[i], 'off');
 
         return this;
     },
@@ -480,6 +485,28 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         }
     },
 
+    onLocateClick: function(latlng,zoom) {
+        return () => {
+            this.moveViewTo(latlng,"open",zoom);
+        }
+    },
+
+    /**
+     * (un)registers the onclick event for the given locate button
+     * depending on the second argument
+     * @private
+     *
+     * @param {DOMelement} [locateButton]
+     * @param {String} [on] 'on' or 'off'
+     */
+    _locateClick: function(locateButton, on, latlng,zoom) {
+        if (on === 'on') {
+            L.DomEvent.on(locateButton, 'click', this.onLocateClick(latlng,zoom), this);
+        } else {
+            L.DomEvent.off(locateButton, 'click', this.onCloseClick(latlng,zoom));
+        }
+    },
+
     /**
      * Finds & returns the DOMelement of a tab
      *
@@ -500,9 +527,11 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      *
      * @param {String} [id] the id of the tab
      * @param {String} [innerHTML] html to be set
-     * @param {String} [title] optionnal, title for the header
+     * @param {String} [title] optional, title for the header
+     * @param {String} [latlng] optional, point to target
+     * @param {String} [zoom] optional, zoom when targeting point
      */
-    updatePaneHTML: function(id, innerHTML, title) {
+    updatePaneHTML: function(id, innerHTML, title, latlng, zoom) {
         let tab, pane;
 
         for (var i = 0; i < this._panes.length; i++) {
@@ -527,8 +556,12 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         let content = '';
         if(title){
             content += '<h1 class="leaflet-sidebar-header">' + title;
-        }else if (tab.title)
+        }else if (tab.title) {
             content += '<h1 class="leaflet-sidebar-header">' + tab.title;
+        }
+        if(latlng){
+            content += '<span class="leaflet-sidebar-locate"><i class="fa fa-location-arrow "></i></span>';
+        }
         if (hasCloseButton)
             content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>';
         if (title || tab.title)
@@ -542,6 +575,14 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
             // select last button, because thats rendered on top
             this._closeButtons.push(closeButtons[closeButtons.length - 1]);
             this._closeClick(closeButtons[closeButtons.length - 1], 'on');
+        }
+
+        // Save references to close button & register click listener
+        let locateButtons = pane.querySelectorAll('.leaflet-sidebar-locate');
+        if (locateButtons.length) {
+            // select last button, because thats rendered on top
+            this._locateButtons.push(locateButtons[locateButtons.length - 1]);
+            this._locateClick(locateButtons[locateButtons.length - 1], 'on',latlng,zoom);
         }
     },
 
@@ -564,24 +605,14 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      * @param latlng
      * @param openClose
      */
-   moveViewTo: function(latlng, openClose){
+   moveViewTo: function(latlng, openClose,zoom){
        let panWidth = Number.parseInt(L.DomUtil.getStyle(this._container, 'max-width')) / 2;
        if (
            openClose === 'open' && this.options.position === 'left' ||
            openClose === 'close' && this.options.position === 'right'
        ) panWidth *= -1;
-
-       let center = map.project(latlng);
-       center = new L.point(center.x+panWidth,center.y+0);
-       let target = map.unproject(center);
-       map.panTo(target);
-
-       /*let x = this._map.latLngToContainerPoint(latlng).x + panWidth;
-       let y = this._map.latLngToContainerPoint(latlng).y;
-       let point = this._map.containerPointToLatLng([x, y]);
-
-       this._map.setView(point, { padding: [panWidth,0],duration: 0.5 });*/
-   }
+        map.setViewOffset(latlng,[-panWidth,0],zoom);
+    }
 });
 
 /**

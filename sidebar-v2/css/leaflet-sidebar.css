@@ -143,6 +143,18 @@
   .leaflet-sidebar-right .leaflet-sidebar-close {
     left: 0; }
 
+.leaflet-sidebar-locate {
+  position: absolute;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  cursor: pointer; }
+.leaflet-sidebar-left .leaflet-sidebar-locate {
+  right: 10; }
+.leaflet-sidebar-right .leaflet-sidebar-locate {
+  left: 10; }
+
 .leaflet-sidebar {
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65); }
   .leaflet-sidebar.leaflet-touch {
