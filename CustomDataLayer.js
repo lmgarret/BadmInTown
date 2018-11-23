@@ -43,18 +43,16 @@ class CustomDataLayer {
 
         this.legendLabel = L.control({position: 'bottomright'});
         this.legendLabel.onAdd = function (map) {
-            let colorGrades = this.getDepartmentColorGrades();
-            let div = L.DomUtil.create('div', 'info legend');
+            this._div = L.DomUtil.create('div', 'info legend');
+            this.update();
+            return this._div;
+        };
+        this.legendLabel.update = this.updateLegendLabel(
+            this.getDepartmentColor,
+            this.getDepartmentColorGrades,
+            this.getDepartmentOpacity
+        );
 
-            // loop through our density intervals and generate a label with a colored square for each interval
-            for (let i = 0; i < colorGrades.length; i++) {
-                div.innerHTML +=
-                    '<i style="background:' + this.getDepartmentColor(colorGrades[i] + 1) + '"></i> ' +
-                    colorGrades[i] + (colorGrades[i + 1] ? '&ndash;' + colorGrades[i + 1] + '<br>' : '+');
-            }
-
-            return div;
-        }.bind(this);
     }
 
     /**
@@ -106,6 +104,10 @@ class CustomDataLayer {
                                     onEachFeature: this.onEachDepartmentFeature.bind(this)
                                 }
                             );
+                            map.on('zoomend', () => {
+                                this.department_layer.setStyle(this.departmentStyle.bind(this));
+                                this.legendLabel.update();
+                            });
 
                             resolveLoadingPromise(42);
                         }
@@ -234,7 +236,7 @@ class CustomDataLayer {
             weight: 1, //stroke width
             opacity: 1,
             color: 'white',  //Outline color
-            fillOpacity: 0.8
+            fillOpacity: this.getDepartmentOpacity(department.properties.isSelected)
         };
     }
 
@@ -255,6 +257,20 @@ class CustomDataLayer {
                             d > 10 ? '#81D4FA' :
                                 d > 5 ? '#B3E5FC' :
                                     '#E1F5FE';
+    }
+
+    getDepartmentOpacity(isSelected){
+        if(isSelected){
+            return 0;
+        }
+        let zoom = map.getZoom();
+
+        if (zoom >= CLUSTER_VISIBILITY_ZOOM) {
+            let maxZoom = map.getMaxZoom() + 1; //+1 so that when at real maxZoom the legend is not empty
+            return 0.5 * (maxZoom - zoom) / (maxZoom - CLUSTER_VISIBILITY_ZOOM);
+        } else {
+            return 0.8;
+        }
     }
 
     getDepartmentColorGrades() {
@@ -301,6 +317,7 @@ class CustomDataLayer {
     onClickDepartment(e) {
         let layer = e.target;
         layer.closePopup();
+
         map.fitBounds(e.target.getBounds());
 
         this.department_layer.eachLayer(l => {
@@ -314,7 +331,9 @@ class CustomDataLayer {
             dashArray: '',
             fillOpacity: 0,
         });
-        sidebar.close("infoPane");
+        map.once("moveend zoomend", () => {
+            sidebar.close("infoPane");
+        });
     }
 
     onDataPointClicked(dataPoint, options){
@@ -363,6 +382,23 @@ class CustomDataLayer {
         this._div.innerHTML = '<h4>DataPoints density</h4>' + (props ?
             '<b>' + props.nom + '</b><br />' + props.density + ' datapoints</sup>'
             : 'Hover over a department');
+    }
+
+    updateLegendLabel(colorFct,colorGradesFct,opacityFct) {
+        return function (props) {
+            let colorGrades = colorGradesFct();
+            let div = L.DomUtil.create('div', 'info legend');
+
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (let i = 0; i < colorGrades.length; i++) {
+                let colorStr = colorFct(colorGrades[i] + 1);
+                let opacityStr = opacityFct(false);
+                div.innerHTML +=
+                    `<i style="background: ${colorStr}; opacity: ${opacityStr}"></i>`  +
+                    colorGrades[i] + (colorGrades[i + 1] ? '&ndash;' + colorGrades[i + 1] + '<br>' : '+');
+            }
+            this._div.innerHTML = div.innerHTML;
+        };
     }
 
     getLoadingPercentage() {

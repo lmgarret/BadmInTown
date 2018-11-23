@@ -41,7 +41,7 @@ function create_map() {
         let targetPoint = this.project(latlng, targetZoom).subtract(offset),
             targetLatLng = this.unproject(targetPoint, targetZoom);
         return this.setView(targetLatLng, targetZoom);
-    }
+    };
 
     createUI();
 
@@ -51,7 +51,7 @@ function create_map() {
 function createUI(){
 
     sidebar = L.control.sidebar({
-        autopan: true,       // whether to maintain the centered map point when opening the sidebar
+        //autopan: true,       // whether to maintain the centered map point when opening the sidebar
         closeButton: true,    // whether t add a close button to the panes
         container: 'sidebar', // the DOM container or #ID of a predefined sidebar container that should be used
         position: 'left',     // left or right
