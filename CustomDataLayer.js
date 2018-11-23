@@ -1,5 +1,21 @@
-const FRANCE_GEOJSON_PATH = "geojson/france-departements_low.geojson";
+let FRANCE_GEOJSON_PATH = "geojson/france_departements_all_low.geojson";
 const CLUSTER_VISIBILITY_ZOOM = 8;
+
+
+
+switch(window.location.protocol) {
+    case 'file:':
+        //dev file, lower quality thus faster loading times
+        FRANCE_GEOJSON_PATH = "geojson/france_departements_all_dev.geojson";
+        break;
+    case 'http:':
+    case 'https:':
+    default:
+        FRANCE_GEOJSON_PATH = "geojson/france_departements_all_low.geojson";
+        break;
+}
+
+
 
 class CustomDataLayer {
 
@@ -8,9 +24,16 @@ class CustomDataLayer {
         this.dataPoints = [];
         this.visible = false;
         this.loadedDepartments = 0;
-        this.totalDepartments = 95;
+        this.totalDepartments = 101;
 
         this.infoLabel = L.control();
+        this.sidebarPanelButton = {
+            id: 'dataPanel',                     // UID, used to access the panel
+            tab: '<i class="fa fa-question" style="color: black;"></i>',  // content can be passed as HTML string,
+            //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
+            title: 'Data',              // an optional pane header
+            button: toggleLayerButton
+        };
         this.infoLabel.onAdd = function (map) {
             this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
             this.update();
@@ -20,18 +43,16 @@ class CustomDataLayer {
 
         this.legendLabel = L.control({position: 'bottomright'});
         this.legendLabel.onAdd = function (map) {
-            let colorGrades = this.getDepartmentColorGrades();
-            let div = L.DomUtil.create('div', 'info legend');
+            this._div = L.DomUtil.create('div', 'info legend');
+            this.update();
+            return this._div;
+        };
+        this.legendLabel.update = this.updateLegendLabel(
+            this.getDepartmentColor,
+            this.getDepartmentColorGrades,
+            this.getDepartmentOpacity
+        );
 
-            // loop through our density intervals and generate a label with a colored square for each interval
-            for (let i = 0; i < colorGrades.length; i++) {
-                div.innerHTML +=
-                    '<i style="background:' + this.getDepartmentColor(colorGrades[i] + 1) + '"></i> ' +
-                    colorGrades[i] + (colorGrades[i + 1] ? '&ndash;' + colorGrades[i + 1] + '<br>' : '+');
-            }
-
-            return div;
-        }.bind(this);
     }
 
     /**
@@ -83,6 +104,10 @@ class CustomDataLayer {
                                     onEachFeature: this.onEachDepartmentFeature.bind(this)
                                 }
                             );
+                            map.on('zoomend', () => {
+                                this.department_layer.setStyle(this.departmentStyle.bind(this));
+                                this.legendLabel.update();
+                            });
 
                             resolveLoadingPromise(42);
                         }
@@ -176,8 +201,17 @@ class CustomDataLayer {
             fillOpacity: 0.8,
             weight: 0 //stroke width
         }).bindPopup(`${dataPoint.name}`);
+        let options = {
+            locate: {
+                callback: () => {
+                    if(!marker.getPopup().isOpen()){
+                        marker.openPopup();
+                    }
+                }
+            }
+        };
         marker.on({
-            click: this.moveViewTo
+            click: this.onDataPointClicked(dataPoint,options).bind(this),
         });
         return marker;
     }
@@ -185,9 +219,12 @@ class CustomDataLayer {
     computeDepartmentDensity(department, dataPoints) {
         department.properties.density = 0;
         dataPoints.forEach(dataPoint => {
-            let point = turf.point([dataPoint.long, dataPoint.lat]);
-            if (turf.inside(point, department)) {
-                department.properties.density++;
+            if (dataPoint.department_code === undefined){
+                let point = turf.point([dataPoint.long, dataPoint.lat]);
+                if (turf.inside(point, department)) {
+                    department.properties.density++;
+                    dataPoint.department_code = department.properties.code;
+                }
             }
         });
         return department;
@@ -199,7 +236,7 @@ class CustomDataLayer {
             weight: 1, //stroke width
             opacity: 1,
             color: 'white',  //Outline color
-            fillOpacity: 0.8
+            fillOpacity: this.getDepartmentOpacity(department.properties.isSelected)
         };
     }
 
@@ -222,6 +259,20 @@ class CustomDataLayer {
                                     '#E1F5FE';
     }
 
+    getDepartmentOpacity(isSelected){
+        if(isSelected){
+            return 0;
+        }
+        let zoom = map.getZoom();
+
+        if (zoom >= CLUSTER_VISIBILITY_ZOOM) {
+            let maxZoom = map.getMaxZoom() + 1; //+1 so that when at real maxZoom the legend is not empty
+            return 0.5 * (maxZoom - zoom) / (maxZoom - CLUSTER_VISIBILITY_ZOOM);
+        } else {
+            return 0.8;
+        }
+    }
+
     getDepartmentColorGrades() {
         return [0, 5, 10, 15, 20, 30, 45, 65];
     }
@@ -235,7 +286,9 @@ class CustomDataLayer {
         let dep_code = layer.feature.properties.code;
 
         this.department_layer.eachLayer(l => {
-            this.department_layer.resetStyle(l);
+            if (!l.feature.properties.isSelected) {
+                this.department_layer.resetStyle(l);
+            }
         });
         if (map.getZoom() < CLUSTER_VISIBILITY_ZOOM) {
             layer.openPopup();
@@ -255,7 +308,7 @@ class CustomDataLayer {
         let polygon = e.target.toGeoJSON();
         let point = turf.point([e.latlng.lng, e.latlng.lat]);
 
-        if (!turf.inside(point, polygon)) {
+        if (!turf.inside(point, polygon) && !layer.feature.properties.isSelected) {
             this.department_layer.resetStyle(e.target);
         }
         this.infoLabel.update();
@@ -264,7 +317,42 @@ class CustomDataLayer {
     onClickDepartment(e) {
         let layer = e.target;
         layer.closePopup();
+
         map.fitBounds(e.target.getBounds());
+
+        this.department_layer.eachLayer(l => {
+            if (l !== layer) {
+                l.feature.properties.isSelected = false;
+                this.department_layer.resetStyle(l);
+            }
+        });
+        layer.feature.properties.isSelected = true;
+        layer.setStyle({
+            dashArray: '',
+            fillOpacity: 0,
+        });
+        map.once("moveend zoomend", () => {
+            sidebar.close("infoPane");
+        });
+    }
+
+    onDataPointClicked(dataPoint, options){
+        return (e) => {
+            let title = this.getDataType();
+            title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
+            let html = `<b>Name:</b> ${dataPoint.name}(${dataPoint.short_name}) </br>`
+                + `<b>City:</b> ${dataPoint.city_name}`;
+            let paneOptions = {
+                title: title,
+                locate: {
+                    latlng: e.latlng,
+                    zoom: map.getZoom(),
+                    callback: options.locate.callback
+                }
+            }
+            sidebar.updatePaneHTML("infoPane", html,paneOptions);
+            sidebar.open("infoPane",e.latlng);
+        }
     }
 
     moveViewTo(e) {
@@ -296,15 +384,50 @@ class CustomDataLayer {
             : 'Hover over a department');
     }
 
+    updateLegendLabel(colorFct,colorGradesFct,opacityFct) {
+        return function (props) {
+            let colorGrades = colorGradesFct();
+            let div = L.DomUtil.create('div', 'info legend');
+
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (let i = 0; i < colorGrades.length; i++) {
+                let colorStr = colorFct(colorGrades[i] + 1);
+                let opacityStr = opacityFct(false);
+                div.innerHTML +=
+                    `<i style="background: ${colorStr}; opacity: ${opacityStr}"></i>`  +
+                    colorGrades[i] + (colorGrades[i + 1] ? '&ndash;' + colorGrades[i + 1] + '<br>' : '+');
+            }
+            this._div.innerHTML = div.innerHTML;
+        };
+    }
+
     getLoadingPercentage() {
         //rough estimation of the progress done so far
         return 100 * this.loadedDepartments / this.totalDepartments;
+    }
+
+    deselectAllDepartments() {
+        this.department_layer.eachLayer(l => {
+            l.feature.properties.isSelected = false;
+            this.department_layer.resetStyle(l);
+        });
+    }
+
+    getSideBarPanelButton() {
+        return this.sidebarPanelButton;
     }
 }
 
 class ClubsLayer extends CustomDataLayer {
     constructor() {
         super("data/Club_geo.csv");
+        this.sidebarPanelButton = {
+            id: 'clubsPanel',                     // UID, used to access the panel
+            tab: '<i class="fa fa-home" style="color: black;"></i>',  // content can be passed as HTML string,
+            //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
+            title: 'Clubs',              // an optional pane header
+            button: toggleLayerButton
+        };
     }
 
     getDataType() {
@@ -341,6 +464,13 @@ class ClubsLayer extends CustomDataLayer {
 class TournamentsLayer extends CustomDataLayer {
     constructor() {
         super("data/Tournament.csv");
+        this.sidebarPanelButton = {
+            id: 'tournamentsPanel',                     // UID, used to access the panel
+            tab: '<i class="fa fa-trophy" style="color: black;"></i>',  // content can be passed as HTML string,
+            //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
+            title: 'Tournaments',              // an optional pane header
+            button: toggleLayerButton
+        };
     }
 
     getDataType() {

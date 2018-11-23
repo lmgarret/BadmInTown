@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="JavaScriptLibraryMappings">
-    <file url="PROJECT" libraries="{bootstrap, d3.v5, leaflet-src, leaflet.markercluster, turf}" />
+    <file url="PROJECT" libraries="{L.TileLayer.PouchDBCached, bootstrap, d3.v5, leaflet-sidebar, leaflet-src, leaflet.markercluster, pouchdb, turf}" />
   </component>
 </project>

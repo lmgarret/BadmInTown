@@ -1,3 +1,5 @@
+const INITIAL_COORD = [46.43, 2.30];
+const INITIAL_ZOOM = 5.5;
 let map;
 
 let clubsLayer = new ClubsLayer();
@@ -7,7 +9,8 @@ let activeLayer = undefined;
 let franceLightLayer;
 
 let loadingBar;
-
+let sidebar;
+let infoSidebarPane;
 main();
 
 function main() {
@@ -17,8 +20,9 @@ function main() {
             let promiseClubs = clubsLayer.loadDataPoints(map);
 
             Promise.all([promiseClubs]).then(() => {
-                createLeftControls();
+                sidebar.addPanel(clubsLayer.getSideBarPanelButton());
                 clubsLayer.show();
+                sidebar.open("home");
             });
         });
 
@@ -29,8 +33,37 @@ function create_map() {
     map = L.map('map', {
         minZoom: 0,
         maxZoom: 13,
-    }).setView([46.43, 2.30], 5.5);
+    }).setView(INITIAL_COORD, INITIAL_ZOOM);
     map._layersMaxZoom = 13;
+
+    //added function to setView with an offset in pixels after zooming
+    L.Map.prototype.setViewOffset = function (latlng, offset, targetZoom) {
+        let targetPoint = this.project(latlng, targetZoom).subtract(offset),
+            targetLatLng = this.unproject(targetPoint, targetZoom);
+        return this.setView(targetLatLng, targetZoom);
+    };
+
+    createUI();
+
+    return loadBaseLayers();
+}
+
+function createUI(){
+
+    sidebar = L.control.sidebar({
+        //autopan: true,       // whether to maintain the centered map point when opening the sidebar
+        closeButton: true,    // whether t add a close button to the panes
+        container: 'sidebar', // the DOM container or #ID of a predefined sidebar container that should be used
+        position: 'left',     // left or right
+    }).addTo(map);
+
+    infoSidebarPane = {
+        id: 'infoPane',                     // UID, used to access the panel
+        tab: '<i class="fa fa-info"></i>',  // content can be passed as HTML string,
+        pane: "Click on a data point to get more info about it.",        // DOM elements can be passed, too
+        title: 'Info',              // an optional pane header
+    };
+    sidebar.addPanel(infoSidebarPane);
 
     loadingBar = L.control.custom({
         position: 'bottomleft',
@@ -44,43 +77,14 @@ function create_map() {
             },
     });
 
-    return loadBaseLayers();
-}
-
-function loadBaseLayers() {
-    const positron = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
-        attribution: '©OpenStreetMap, ©CartoDB'
-    }).addTo(map);
-
-    return d3.json('geojson/france_shape.geojson').then(geoJSON => {
-        franceLightLayer = L.TileLayer.boundaryCanvas('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
-            attribution: '©OpenStreetMap, ©CartoDB',
-            boundary: geoJSON,
-        });
-
-        map.createPane('labels');
-        const positronLabels = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png', {
-            attribution: '©OpenStreetMap, ©CartoDB',
-            pane: 'labels'
-        }).addTo(map);
-    });
-}
-
-function createLeftControls() {
-    const htmlFranceButton = '<button type="button" class="btn btn-group-first btn-france" id="franceButton">' +
+    const htmlFranceButton = '<button type="button" class="btn btn-france" id="franceButton">' +
         '   <img src="svg/fr.svg" alt="fr"  width="15" height="15" >' +
-        '</button>';
-    const htmlToggleButtonClubs = '<button type="button" class="btn btn-group-last" id="toggleButton">' +
-        '   <i class="fa fa-home"></i>' +
-        '</button>';
-    const htmlToggleButtonTournaments = '<button type="button" class="btn btn-group-last" id="toggleButton">' +
-        '   <i class="fa fa-trophy"></i>' +
         '</button>';
 
     let buttons;
     buttons = L.control.custom({
         position: 'topleft',
-        content: htmlFranceButton + htmlToggleButtonClubs,
+        content: htmlFranceButton,
         classes: 'btn-group-vertical',
         style:
             {
@@ -94,20 +98,9 @@ function createLeftControls() {
             {
                 click: function (data) {
                     switch (data.target.id) {
-                        case "toggleButton":
-                            if (clubsLayer.visible) {
-                                setActiveLayer(tournamentsLayer, [clubsLayer]);
-                                buttons.container.innerHTML = htmlFranceButton + htmlToggleButtonTournaments;
-                            } else if (tournamentsLayer.visible) {
-                                setActiveLayer(clubsLayer, [tournamentsLayer]);
-                                buttons.container.innerHTML = htmlFranceButton + htmlToggleButtonClubs;
-
-                            } else {
-                                console.log("ToggleControl: error onclick.");
-                            }
-                            break;
                         case "franceButton":
-                            map.setView([46.43, 2.30], 5.5);
+                            map.setView(INITIAL_COORD, INITIAL_ZOOM);
+                            activeLayer.deselectAllDepartments();
                             break;
                         default:
                             break;
@@ -125,6 +118,35 @@ function createLeftControls() {
             }
     }).addTo(map);
 }
+
+function loadBaseLayers() {
+    const positron = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
+        attribution: '©OpenStreetMap, ©CartoDB',
+        useCache: true,
+        crossOrigin: true,
+        cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
+    }).addTo(map);
+
+    return d3.json('geojson/france_shape_hd.geojson').then(geoJSON => {
+        franceLightLayer = L.TileLayer.boundaryCanvas('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
+            attribution: '©OpenStreetMap, ©CartoDB',
+            boundary: geoJSON,
+            useCache: true,
+            crossOrigin: true,
+            cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
+        });
+
+        map.createPane('labels');
+        const positronLabels = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png', {
+            attribution: '©OpenStreetMap, ©CartoDB',
+            useCache: true,
+            crossOrigin: true,
+            cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
+            pane: 'labels'
+        }).addTo(map);
+    });
+}
+
 function _onLoadStarted(){
     franceLightLayer.remove();
     loadingBar.addTo(map);
@@ -136,13 +158,6 @@ function _onLoadProgress() {
 
     if( percentage % 10 === 0){
         loadingBar.container.innerHTML = htmlLoadingBar(percentage);
-        //loadingBar.invalidateSize();
-        //map.removeControl(loadingBar);
-        //map.addControl(loadingBar);
-        //loadingBar.remove();
-        //loadingBar.addTo(map);
-        //loadingBar.redraw();
-        //map.redraw();
         console.log(`Loaded: ${percentage}`);
     }
     loadingBar.container.innerHTML = htmlLoadingBar(percentage);
@@ -166,6 +181,31 @@ function htmlLoadingBar(percentage) {
 
 function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+function toggleLayerButton(event){
+    sidebar.close();
+    let title = "Info";
+    let html = "Click on a data point to get more info about it.";
+    let paneOptions = {
+        title: title,
+    }
+    sidebar.updatePaneHTML("infoPane", html,paneOptions);
+
+    if (clubsLayer.visible) {
+        setActiveLayer(tournamentsLayer, [clubsLayer]);
+        //TODO modularize removal?
+        sidebar.removePanel('clubsPanel');
+        sidebar.addPanel(tournamentsLayer.getSideBarPanelButton());
+    } else if (tournamentsLayer.visible) {
+        setActiveLayer(clubsLayer, [tournamentsLayer]);
+        //TODO modularize removal?
+        sidebar.removePanel('tournamentsPanel');
+        sidebar.addPanel(clubsLayer.getSideBarPanelButton());
+
+    } else {
+        console.log("ToggleControl: error onclick.");
+    }
 }
 
 function setActiveLayer(layer, otherLayers = []){
