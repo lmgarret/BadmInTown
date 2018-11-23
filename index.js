@@ -216,7 +216,7 @@ function setActiveLayer(layer, otherLayers = []){
     }
 
     if(activeLayer.loadingPromise === undefined){
-        activeLayer.loadDataPoints();
+        activeLayer.loadDataPoints(map);
     }
 
     activeLayer.show();
