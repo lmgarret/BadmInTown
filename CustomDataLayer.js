@@ -349,7 +349,7 @@ class CustomDataLayer {
                     zoom: map.getZoom(),
                     callback: options.locate.callback
                 }
-            }
+            };
             sidebar.updatePaneHTML("infoPane", html,paneOptions);
             sidebar.open("infoPane",e.latlng);
         }
@@ -423,7 +423,7 @@ class ClubsLayer extends CustomDataLayer {
         super("data/Club_geo.csv");
         this.sidebarPanelButton = {
             id: 'clubsPanel',                     // UID, used to access the panel
-            tab: '<i class="fab fa-houzz" style="color: black;"></i>',  // content can be passed as HTML string,
+            tab: '<i class="fas fa-school" style="color: black;"></i>',  // content can be passed as HTML string,
             //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
             title: 'Clubs',              // an optional pane header
             button: toggleLayerButton
