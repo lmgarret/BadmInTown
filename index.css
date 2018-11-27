@@ -119,3 +119,40 @@ html, body {
 .marker-cluster-large div {
     background-color: rgba(38, 50, 56, 0.7);
 }
+
+/*
+    DIVERGING STACKED CHART
+ */
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.axis.zero line {
+    stroke: #808080;
+    stroke-width: 1;
+}
+.legendbox {
+    height: 16px;
+    line-height: 16px;
+}
+.legendbox .legend {
+    position: relative;
+    display: inline-block;
+    padding-right: 16px;
+}
+.legendbox .legend .rect {
+    display: inline-block;
+    width: 32px;
+    height: 16px;
+    margin: 0; padding: 0;
+}
+.legendbox .legend .label {
+    display: inline-block;
+    transform: 			translateY(-20%);
+    font: "10px sans-serif";
+    margin-left: 8px;
+    position: relative;
+}
