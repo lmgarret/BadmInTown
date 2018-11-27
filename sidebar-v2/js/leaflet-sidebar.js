@@ -333,7 +333,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
                 if (data.title)
                     content += '<h1 class="leaflet-sidebar-header">' + data.title;
                 if (this.options.closeButton)
-                    content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>';
+                    content += '<span class="leaflet-sidebar-close"><i class="fas fa-caret-left"></i></span>';
                 if (data.title)
                     content += '</h1>';
                 pane.innerHTML = content + "<br>"+ data.pane;
@@ -578,10 +578,10 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
             content += '<h1 class="leaflet-sidebar-header">' + tab.title;
         }
         if(options.locate && options.locate.latlng){
-            content += '<span class="leaflet-sidebar-locate"><i class="fa fa-location-arrow "></i></span>';
+            content += '<span class="leaflet-sidebar-locate"><i class="fas fa-location-arrow "></i></span>';
         }
         if (hasCloseButton)
-            content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>';
+            content += '<span class="leaflet-sidebar-close"><i class="fas fa-caret-left"></i></span>';
         if (options.title || tab.title)
             content += '</h1>';
         pane.innerHTML = content + "<br>"+ innerHTML;

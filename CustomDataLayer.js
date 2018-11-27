@@ -423,7 +423,7 @@ class ClubsLayer extends CustomDataLayer {
         super("data/Club_geo.csv");
         this.sidebarPanelButton = {
             id: 'clubsPanel',                     // UID, used to access the panel
-            tab: '<i class="fa fa-home" style="color: black;"></i>',  // content can be passed as HTML string,
+            tab: '<i class="fab fa-houzz" style="color: black;"></i>',  // content can be passed as HTML string,
             //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
             title: 'Clubs',              // an optional pane header
             button: toggleLayerButton
@@ -466,7 +466,7 @@ class TournamentsLayer extends CustomDataLayer {
         super("data/Tournament.csv");
         this.sidebarPanelButton = {
             id: 'tournamentsPanel',                     // UID, used to access the panel
-            tab: '<i class="fa fa-trophy" style="color: black;"></i>',  // content can be passed as HTML string,
+            tab: '<i class="fas fa-trophy" style="color: black;"></i>',  // content can be passed as HTML string,
             //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
             title: 'Tournaments',              // an optional pane header
             button: toggleLayerButton
