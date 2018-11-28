@@ -25,7 +25,9 @@ function main() {
                 sidebar.addPanel(clubsLayer.getSideBarPanelButton());
                 clubsLayer.show();
                 sidebar.open("home");
-                testStackedChart();
+                loadPlayers().then(() => {
+                    testStackedChart();
+                });
             });
         });
 
@@ -51,7 +53,7 @@ function create_map() {
     return loadBaseLayers();
 }
 
-function createUI(){
+function createUI() {
 
     sidebar = L.control.sidebar({
         //autopan: true,       // whether to maintain the centered map point when opening the sidebar
@@ -136,7 +138,7 @@ function loadBaseLayers() {
         attribution: '©OpenStreetMap, ©CartoDB',
         useCache: true,
         crossOrigin: true,
-        cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
+        cacheMaxAge: 604800000, // 7 days, we don't need exact roads for this project
     }).addTo(map);
 
     return d3.json('geojson/france_shape_hd.geojson').then(geoJSON => {
@@ -145,7 +147,7 @@ function loadBaseLayers() {
             boundary: geoJSON,
             useCache: true,
             crossOrigin: true,
-            cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
+            cacheMaxAge: 604800000, // 7 days, we don't need exact roads for this project
         });
 
         map.createPane('labels');
@@ -153,27 +155,28 @@ function loadBaseLayers() {
             attribution: '©OpenStreetMap, ©CartoDB',
             useCache: true,
             crossOrigin: true,
-            cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
+            cacheMaxAge: 604800000, // 7 days, we don't need exact roads for this project
             pane: 'labels'
         }).addTo(map);
     });
 }
 
-function _onLoadStarted(){
+function _onLoadStarted() {
     franceLightLayer.remove();
     loadingBar.addTo(map);
 }
+
 function _onLoadProgress() {
     let percentage = activeLayer.getLoadingPercentage();
     percentage = Math.round(percentage);
     percentage = percentage > 100 ? 100 : percentage;
 
-    if( percentage % 10 === 0){
+    if (percentage % 10 === 0) {
         loadingBar.container.innerHTML = htmlLoadingBar(percentage);
         console.log(`Loaded: ${percentage}`);
     }
     loadingBar.container.innerHTML = htmlLoadingBar(percentage);
-    if(percentage === 100){
+    if (percentage === 100) {
         franceLightLayer.addTo(map);
         loadingBar.remove();
     }
@@ -191,18 +194,18 @@ function htmlLoadingBar(percentage) {
 
 }
 
-function sleep (time) {
+function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
-function toggleLayerButton(event){
+function toggleLayerButton(event) {
     sidebar.close();
     let title = "Info";
     let html = "Click on a data point to get more info about it.";
     let paneOptions = {
         title: title,
     }
-    sidebar.updatePaneHTML("infoPane", html,paneOptions);
+    sidebar.updatePaneHTML("infoPane", html, paneOptions);
 
     if (clubsLayer.visible) {
         setActiveLayer(tournamentsLayer, [clubsLayer]);
@@ -220,30 +223,34 @@ function toggleLayerButton(event){
     }
 }
 
-function setActiveLayer(layer, otherLayers = []){
+function setActiveLayer(layer, otherLayers = []) {
     activeLayer = layer;
 
-    for(let i = 0; i<otherLayers.length; i++) {
+    for (let i = 0; i < otherLayers.length; i++) {
         otherLayers[i].hide();
     }
 
-    if(activeLayer.loadingPromise === undefined){
+    if (activeLayer.loadingPromise === undefined) {
         activeLayer.loadDataPoints(map);
     }
 
     activeLayer.show();
 }
 
-function loadPlayers(){
-    d3.json(FRANCE_GEOJSON_PATH, data => {
-        data.license = parseFloat(data.license);
-        data.club_id = parseFloat(data.club_id);
-        data.club = clubsLayer.dataPoints[data.club_id];
+function loadPlayers() {
+    return d3.json(FRANCE_GEOJSON_PATH, player => {
+        player.license = parseFloat(player.license);
+        player.club_id = parseFloat(player.club_id);
+        player.club = clubsLayer.dataPoints[player.club_id];
+        player.average = parseFloat(data.Moy);
         players.push(data);
+
+        player.club = clubsLayer.getClub(player.club_id);
+        player.club.players.push(player);
     });
 }
 
-function testStackedChart(){
+function testStackedChart() {
     const svgChart = (props, data) => {
         const { width, height, margin, id, selector } = props;
         var svg = d3
@@ -275,7 +282,6 @@ function testStackedChart(){
     ];
     const ratioOfLikert = (keys, getN, data) => {
         const ratioRounder = decimalRounder(3);
-        const cumulRounder = decimalRounder(5);
         return data.map(d => {
             return keys.reduce(
                 (acc, k, i, arr) => {
@@ -317,7 +323,7 @@ function testStackedChart(){
             .select(parentNode)
             .append("div")
             .attr("class", className);
-        var item = g
+        let item = g
             .selectAll(".legend")
             .data(data)
             .enter()
@@ -355,15 +361,6 @@ function testStackedChart(){
             .attr("x2", x)
             .attr("y1", y1)
             .attr("y2", y2);
-    };
-    const serieExtent = data => {
-        const xMin = d3.min(data, d => {
-            return d[0].x0;
-        });
-        const xMax = d3.max(data, d => {
-            return d[d.length - 1].x1;
-        });
-        return [xMin, xMax];
     };
     const plotGroup = (data, svg, config) => {
         const {
@@ -414,18 +411,6 @@ function testStackedChart(){
             .attr("dx", "0.5em")
             .style("text-anchor", "begin")
             .text(getBarText);
-    };
-    const plotRest = data => {
-        rows
-            .insert("rect", ":first-child")
-            .attr("height", bandwidth)
-            .attr("x", "1")
-            .attr("width", width)
-            .attr("fill-opacity", "0.5")
-            .style("fill", "#F5F5F5")
-            .attr("class", function(d, index) {
-                return index % 2 == 0 ? "even" : "uneven";
-            });
     };
     const computeLayout = props => {
         const {
@@ -550,11 +535,10 @@ function testStackedChart(){
             return d3.max(d.maxes);
         });
         const leftPadding = 32;
-        const neutralPadding = 96;
         const xScale = d3
             .scaleLinear()
             .domain([0, xEnd])
-            .rangeRound([0, width - neutralPadding - leftPadding])
+            .rangeRound([0, width - leftPadding])
             .nice();
         plotYAxis({ svg, className: "y axis", yScale });
         const svgGroup = svg
@@ -566,7 +550,7 @@ function testStackedChart(){
             yScale,
             questionLabels
         };
-        let groupData, xOffset, xMax;
+        let groupData, xOffset;
         // -- group
         groupData = groupsWithData[0];
         xOffset = xScale(d3.max(groupsWithData[0].maxes));
@@ -599,19 +583,5 @@ function testStackedChart(){
             x: xOffset,
             ys: [0, height]
         });
-        // -- group
-        groupData = groupsWithData[1];
-        xOffset =
-            xScale(d3.max(groupsWithData[0].maxes)) +
-            neutralPadding +
-            xScale(d3.max(groupsWithData[2].maxes));
-        plotGroup(
-            groupData.data,
-            svgGroup
-                .append("g")
-                .attr("class", "neutral")
-                .attr("transform", "translate(" + xOffset + "," + 0 + ")"),
-            computeLayout(Object.assign({}, config, groupData))
-        );
     });
 }
