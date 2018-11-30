@@ -261,14 +261,14 @@ function testStackedChart() {
 
     for (let i = 0; i < data.length; i++) {
         //we inverse values to have the values spread left and right of the axis
-        data[i].rank_NC_count *= - 1;
         data[i].rank_P_count *= - 1;
-        data[i].rank_D_count *= - 1;
+        data[i].rank_NC_count *= - 1;
+        //data[i].rank_D_count *= - 1;
     }
     console.log(data);
 
-    const margin = {top: 35, right: 145, bottom: 35, left: 50},
-        width = 420 - margin.left - margin.right,
+    const margin = {top: 25, right: 20, bottom: 20, left: 10},
+        width = 360 - margin.left - margin.right,
         height = 450 - margin.top - margin.bottom;
 
     const keyLegendMapping = [
@@ -331,6 +331,7 @@ function testStackedChart() {
     update(data);
 
     function update(data, input) {
+        //update the legend
         let tempDiv = L.DomUtil.create('div', 'legend');
 
         // loop through our density intervals and generate a label with a colored square for each interval
@@ -341,18 +342,20 @@ function testStackedChart() {
         }
         document.getElementById("stacked-chart-legend").innerHTML = tempDiv.innerHTML;
 
+        //update the chart
         const keys = keyLegendMapping.map(mapping => mapping.key);
 
         const series = d3.stack()
             .keys(keys)
             .offset(d3.stackOffsetDiverging)
+            .order(d3.stackOrderInsideOut)
             (data);
 
         y.domain(data.map(d => d.name));
 
         x.domain([
+            d3.max(series, stackMax),
             d3.min(series, stackMin),
-            d3.max(series, stackMax)
         ]).nice();
 
         const barGroups = svg.selectAll("g.layer")
@@ -387,6 +390,7 @@ function testStackedChart() {
             .attr("height", y.bandwidth())
             .attr("y", d => y(d.data.name))
             .on('mouseover', function(d) {
+                d3.select(this).classed("bar-chart-hover", true);
                 div.transition()
                     .duration(200)
                     .style('opacity', 0.9);
@@ -395,6 +399,7 @@ function testStackedChart() {
                     .style('top', d3.event.pageY - 28 + 'px');
             })
             .on('mouseout', function() {
+                d3.select(this).classed("bar-chart-hover", false);
                 div
                     .transition()
                     .duration(500)
@@ -406,16 +411,22 @@ function testStackedChart() {
             .merge(bars);
 
         bars.transition().duration(750)
-            .attr("x", d => x(d[0]))
-            .attr("width", d => Math.abs(x(d[1])-x(d[0])));
+            .attr("x", d => x(d[1]))
+            .attr("width", d => Math.abs(x(d[0])-x(d[1])));
 
         svg.selectAll(".y-axis").transition().duration(750)
             .attr("transform", "translate(" + x(0)  + ",0)")
-            .call(d3.axisLeft(y));
+            .call(d3.axisRight(y));
+
+        const formatter = d3.format("0");
 
         svg.selectAll(".x-axis").transition().duration(750)
         //.attr("transform", "translate(0," + x(0) + ")")
-            .call(d3.axisTop(x).ticks(5));
+            .call(d3.axisTop(x).ticks(8)
+                .tickFormat(function (d) {
+                    if (d < 0) d = -d; // No negative labels
+                    return formatter(d);
+                }));
 
         function stackMin(serie) {
             return d3.min(serie, function(d) { return d[0]; });
