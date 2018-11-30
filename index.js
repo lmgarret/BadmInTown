@@ -319,10 +319,10 @@ function testStackedChart() {
         .range(colors);
 
     svg.append("g")
-        .attr("class","x-axis");
+        .attr("class","axis x-axis");
 
     svg.append("g")
-        .attr("class", "y-axis");
+        .attr("class", "axis y-axis");
 
     d3.selectAll(".opt").on("change", function() {
         update(data, this.value)

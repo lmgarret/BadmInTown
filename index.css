@@ -122,7 +122,9 @@ html, body {
 /*
     DIVERGING STACKED CHART
  */
-
+.axis {
+    pointer-events: none;
+}
 .axis path,
 .axis line {
     fill: none;
@@ -133,6 +135,10 @@ html, body {
     stroke: #808080;
     stroke-width: 1;
 }
+.axis.tick text {
+    color: black;
+}
+
 .legendbox {
     height: 16px;
     line-height: 16px;
