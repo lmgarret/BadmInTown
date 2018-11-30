@@ -26,6 +26,7 @@ function main() {
                 clubsLayer.show();
                 sidebar.open("home");
                 loadPlayers().then(() => {
+                    console.log("Building stacked chart...");
                     testStackedChart();
                 });
             });
@@ -238,19 +239,25 @@ function setActiveLayer(layer, otherLayers = []) {
 }
 
 function loadPlayers() {
-    return d3.json(FRANCE_GEOJSON_PATH, player => {
-        player.license = parseFloat(player.license);
-        player.club_id = parseFloat(player.club_id);
-        player.club = clubsLayer.dataPoints[player.club_id];
-        player.average = parseFloat(data.Moy);
-        players.push(data);
-
-        player.club = clubsLayer.getClub(player.club_id);
-        player.club.players.push(player);
+    console.log("Loading players...");
+    return d3.csv("data/Player.csv", d => {
+        try {
+            let player = new Player(d);
+            player.club = clubsLayer.getClub(player.club_id);
+            player.club.addPlayer(player);
+            players.push(player);
+            return player;
+        } catch (e) {
+            console.log(`Dropped ${d.name}: ${e.message}`);
+            return undefined;
+        }
     });
 }
 
 function testStackedChart() {
+    console.log(players);
+    console.log(clubsLayer.getClub(0).getPlayersCountRanked("N"));
+    console.log(clubsLayer.getClub(0));
     const svgChart = (props, data) => {
         const { width, height, margin, id, selector } = props;
         var svg = d3

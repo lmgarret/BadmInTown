@@ -4,24 +4,24 @@ const RANKS_DEPARTMENTAL = ["D", "D7", "D8", "D9", "D+", "D-"];
 const RANKS_COMMUNAL = ["P", "P10", "P11", "P12", "P+", "P-"];
 const RANKS_NONE = ["NC", "?"];
 
+function _parseNumber(arg) {
+    const varToString = varObj => Object.keys(varObj)[0]
+
+    if (typeof arg === "number") {
+        return arg;
+    } else if (typeof arg === "string" && arg !== "") {
+        return parseFloat(arg);
+    } else {
+        throw new TypeError(`${varToString(arg)} is not a parseable number: got ${typeof arg}`);
+    }
+}
+
 class GraphicalDataPoint {
     constructor(data) {
-        this.id = this._parseNumber(data.id);
+        this.id = _parseNumber(data.id);
         this.name = data.name;
-        this.lat = this._parseNumber(data.lat);
-        this.long = this._parseNumber(data.long);
-    }
-
-    _parseNumber(arg) {
-        const varToString = varObj => Object.keys(varObj)[0]
-
-        if (typeof arg === "number") {
-            return arg;
-        } else if (typeof arg === "string" && arg !== "") {
-            return parseFloat(arg);
-        } else {
-            throw new TypeError(`${varToString(arg)} is not a parseable number: got ${typeof arg}`);
-        }
+        this.lat = _parseNumber(data.lat);
+        this.long = _parseNumber(data.long);
     }
 }
 
@@ -87,19 +87,30 @@ class Tournament extends GraphicalDataPoint {
         this.url = data.url;
         this.html = data.html;
         if (data.price_1_tab !== undefined && data.price_1_tab !== "") {
-            this.price_1_tab = this._parseNumber(data.price_1_tab);
+            this.price_1_tab = _parseNumber(data.price_1_tab);
         }
         if (data.price_2_tabs !== undefined && data.price_2_tabs !== "") {
-            this.price_2_tabs = this._parseNumber(data.price_2_tabs);
+            this.price_2_tabs = _parseNumber(data.price_2_tabs);
         }
         if (data.price_3_tabs !== undefined && data.price_3_tabs !== "") {
-            this.price_3_tabs = this._parseNumber(data.price_3_tabs);
+            this.price_3_tabs = _parseNumber(data.price_3_tabs);
         }
     }
 
 }
 
 class Player {
+    constructor(data){
+        this.license = _parseNumber(data.license);
+        this.name = data.name;
+        this.surname = data.surname;
+        this.gender = data.gender;
+        this.rank_solo = data.S;
+        this.rank_double = data.D;
+        this.rank_mixte = data.M;
+        this.rank_avg = data.Moy;
+        this.club_id = _parseNumber(data.club_id);
+    }
 }
 
 class Rank {
