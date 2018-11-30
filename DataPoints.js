@@ -64,13 +64,13 @@ class Club extends GraphicalDataPoint {
         let count = 0;
         for (let i = 0; i < this.players.length; i++) {
             let player = this.players[i];
-            if (ranks.includes(player.S)) {
+            if (ranks.includes(player.rank_solo)) {
                 count++;
             }
-            if (ranks.includes(player.D)) {
+            if (ranks.includes(player.rank_double)) {
                 count++;
             }
-            if (ranks.includes(player.M)) {
+            if (ranks.includes(player.rank_mixte)) {
                 count++;
             }
 

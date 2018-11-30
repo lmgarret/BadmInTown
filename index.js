@@ -26,6 +26,8 @@ function main() {
                 clubsLayer.show();
                 sidebar.open("home");
                 loadPlayers().then(() => {
+                    let club1 = clubsLayer.getClub(1);
+                    console.log(getNTopClubs(10,clubsLayer.getClubs(), "R"));
                     console.log("Building stacked chart...");
                     testStackedChart();
                 });
@@ -254,12 +256,22 @@ function loadPlayers() {
     });
 }
 
+function getNTopClubs(n, clubs, rank = "N") {
+    let start = new Date();
+    let result =  clubs.sort((club1, club2) => {
+        return club1.getPlayersCountRanked(rank) < club2.getPlayersCountRanked(rank);
+    }).slice(0,n);
+    //console.debug(`Sorted in ${new Date - start}ms`);
+    return result;
+}
+
 function testStackedChart() {
-    console.log(players);
+    /*console.log(players);
     console.log(clubsLayer.getClub(0).getPlayersCountRanked("N"));
-    console.log(clubsLayer.getClub(0));
+    console.log(clubsLayer.getClub(0));*/
+
     const svgChart = (props, data) => {
-        const { width, height, margin, id, selector } = props;
+        const {width, height, margin, id, selector} = props;
         var svg = d3
             .select(selector)
             .append("svg")
@@ -282,9 +294,9 @@ function testStackedChart() {
     };
     const keyConfig = [
 //   { csv: "1", g: "-", color: "#c7001e", label: "Strongly disagree" },
-        { csv: "2", g: "-", color: "#f6a580", label: "Unfavorable" },
-        { csv: "3", g: "n", color: "#cccccc", label: "Neutral" },
-        { csv: "4", g: "+", color: "#92c6db", label: "Favorable" },
+        {csv: "2", g: "-", color: "#f6a580", label: "Unfavorable"},
+        {csv: "3", g: "n", color: "#cccccc", label: "Neutral"},
+        {csv: "4", g: "+", color: "#92c6db", label: "Favorable"},
 //   { csv: "5", g: "+", color: "#086fad", label: "Strongly agree" }
     ];
     const ratioOfLikert = (keys, getN, data) => {
@@ -292,28 +304,28 @@ function testStackedChart() {
         return data.map(d => {
             return keys.reduce(
                 (acc, k, i, arr) => {
-                    const { obs, ratio, N } = acc;
+                    const {obs, ratio, N} = acc;
                     const raw = parseInt(d[k], 10);
                     obs[i] = raw;
                     ratio[i] = ratioRounder(raw / N);
                     return acc;
                 },
-                { obs: [], ratio: [], N: getN(d), label: d.Question }
+                {obs: [], ratio: [], N: getN(d), label: d.Question}
             );
         });
     };
     const addDataToGroup = rawsAndRatios => {
         return group => {
-            const { key, series } = group;
+            const {key, series} = group;
             const items = rawsAndRatios.map((d, i) => {
                 let x0 = 0,
                     x1;
                 return series.map(g => {
-                    const { idx } = g;
+                    const {idx} = g;
                     const obs = d.obs[idx],
                         ratio = d.ratio[idx];
                     x1 = x0 + ratio;
-                    const r = { obs, ratio, x0, x1 };
+                    const r = {obs, ratio, x0, x1};
                     x0 = x1;
                     return r;
                 });
@@ -321,11 +333,11 @@ function testStackedChart() {
             const maxes = items.map((d, i) => {
                 return d[d.length - 1].x1;
             });
-            return { group: key, series, data: items, maxes };
+            return {group: key, series, data: items, maxes};
         };
     };
     const plotHorizontalHtmlLegend = props => {
-        const { parentNode, data, className } = props;
+        const {parentNode, data, className} = props;
         const g = d3
             .select(parentNode)
             .append("div")
@@ -351,14 +363,14 @@ function testStackedChart() {
         // d3.selectAll(".legendbox").attr("transform", "translate(" + movesize + ",0)");
     };
     const plotYAxis = props => {
-        const { svg, className, yScale } = props;
+        const {svg, className, yScale} = props;
         svg
             .append("g")
             .attr("class", className)
             .call(d3.axisLeft(yScale));
     };
     const plotZeroLine = props => {
-        const { svg, className, x, ys } = props;
+        const {svg, className, x, ys} = props;
         const [y1, y2] = ys;
         svg
             .append("g")
@@ -487,7 +499,7 @@ function testStackedChart() {
             getBarColor
         };
     };
-    d3.csv("raw_data.csv").then(function(data) {
+    d3.csv("raw_data.csv").then(function (data) {
         const rawsAndRatios = ratioOfLikert(
             keyConfig.map(d => {
                 return d.csv;
@@ -499,38 +511,38 @@ function testStackedChart() {
         );
         const groups = keyConfig.reduce(
             (acc, d, i) => {
-                const { ks, groups } = acc;
-                const { g, csv, color, label } = d;
+                const {ks, groups} = acc;
+                const {g, csv, color, label} = d;
                 let idx = ks.indexOf(g);
                 if (idx === -1) {
                     idx = ks.length;
                     ks.push(g);
                 }
                 if (!groups[idx]) {
-                    groups[idx] = { key: g, series: [] };
+                    groups[idx] = {key: g, series: []};
                 }
-                groups[idx].series.push({ idx: i, csv, color, label });
-                return { ks, groups };
+                groups[idx].series.push({idx: i, csv, color, label});
+                return {ks, groups};
             },
-            { ks: [], groups: [] }
+            {ks: [], groups: []}
         ).groups;
         const groupsWithData = groups.map(addDataToGroup(rawsAndRatios));
         plotHorizontalHtmlLegend({
             parentNode: document.querySelector("#figure"),
             data: keyConfig.map(d => {
-                return { label: d.label, color: d.color };
+                return {label: d.label, color: d.color};
             }),
             center: 50,
             className: "legendbox"
         });
-        const { svg, width, height } = svgChart({
-            margin: { top: 50, right: 20, bottom: 10, left: 65 },
+        const {svg, width, height} = svgChart({
+            margin: {top: 50, right: 20, bottom: 10, left: 65},
             width: 800,
             height: 500,
             selector: "#figure",
             id: "d3-plot"
         });
-        const questionLabels = rawsAndRatios.map(function(d) {
+        const questionLabels = rawsAndRatios.map(function (d) {
             return d.label;
         });
         const yScale = d3
@@ -547,7 +559,7 @@ function testStackedChart() {
             .domain([0, xEnd])
             .rangeRound([0, width - leftPadding])
             .nice();
-        plotYAxis({ svg, className: "y axis", yScale });
+        plotYAxis({svg, className: "y axis", yScale});
         const svgGroup = svg
             .append("g")
             .attr("class", "plot")
