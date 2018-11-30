@@ -362,12 +362,34 @@ function testStackedChart() {
 
         bars.exit().remove();
 
+        const div = d3
+            .select('body')
+            .append('div')
+            .attr('class', 'tooltip')
+            .style('opacity', 0);
+
+
         bars = bars
             .enter()
             .append("rect")
             .attr("height", y.bandwidth())
             .attr("y", d => y(d.data.name))
-            .merge(bars)
+            .on('mouseover', d => {
+                div
+                    .transition()
+                    .duration(200)
+                    .style('opacity', 0.9);
+                div
+                    .html(d.data.name)
+                    .style('left', d3.event.pageX + 'px')
+                    .style('top', d3.event.pageY - 28 + 'px');
+            })
+            .on('mouseout', () => {
+                div
+                    .transition()
+                    .duration(500)
+                    .style('opacity', 0)
+            }).merge(bars);
 
         bars.transition().duration(750)
             .attr("x", d => x(d[0]))
