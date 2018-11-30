@@ -33,6 +33,11 @@ class Club extends GraphicalDataPoint {
         this.url = data.url;
         this.html = data.html;
         this.players = [];
+        this.rank_N_count = 0;
+        this.rank_R_count = 0;
+        this.rank_D_count = 0;
+        this.rank_P_count = 0;
+        this.rank_NC_count = 0;
     }
 
     getPlayers() {
@@ -41,23 +46,44 @@ class Club extends GraphicalDataPoint {
 
     addPlayer(player) {
         this.players.push(player);
+
+        this.updateRankCount(player, RANKS_NATIONAL, c => this.rank_N_count += c);
+        this.updateRankCount(player, RANKS_REGIONAL, c => this.rank_R_count += c);
+        this.updateRankCount(player, RANKS_DEPARTMENTAL, c => this.rank_D_count += c);
+        this.updateRankCount(player, RANKS_COMMUNAL, c => this.rank_P_count += c);
+        this.updateRankCount(player, RANKS_NONE, c => this.rank_NC_count += c);
     }
 
     getPlayersCountRanked(rank) {
         switch (rank) {
             case "N":
-                return this._getPlayersCountRanked(RANKS_NATIONAL);
+                return this.rank_N_count;
             case "R":
-                return this._getPlayersCountRanked(RANKS_REGIONAL);
+                return this.rank_R_count;
             case "D":
-                return this._getPlayersCountRanked(RANKS_DEPARTMENTAL);
+                return this.rank_D_count;
             case "P":
-                return this._getPlayersCountRanked(RANKS_COMMUNAL);
+                return this.rank_P_count;
             case "NC":
-                return this._getPlayersCountRanked(RANKS_NONE);
+                return this.rank_NC_count;
             default:
                 throw new Error(`unknown rank: ${rank}`);
         }
+    }
+
+    updateRankCount(player, ranks, callback) {
+        let count = 0
+        if (ranks.includes(player.rank_solo)) {
+            count++;
+        }
+        if (ranks.includes(player.rank_double)) {
+            count++;
+        }
+        if (ranks.includes(player.rank_mixte)) {
+            count++;
+        }
+
+        callback(count);
     }
 
     _getPlayersCountRanked(ranks) {

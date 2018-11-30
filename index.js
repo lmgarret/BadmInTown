@@ -26,8 +26,6 @@ function main() {
                 clubsLayer.show();
                 sidebar.open("home");
                 loadPlayers().then(() => {
-                    let club1 = clubsLayer.getClub(1);
-                    console.log(getNTopClubs(10,clubsLayer.getClubs(), "R"));
                     console.log("Building stacked chart...");
                     testStackedChart();
                 });
@@ -77,7 +75,11 @@ function createUI() {
     statsSidebarPane = {
         id: 'statsPane',                     // UID, used to access the panel
         tab: '<i class="fa fa-chart-bar "></i>',  // content can be passed as HTML string,
-        pane: "<div id=\"figure\" style=\"margin-bottom: 50px;\"></div>",        // DOM elements can be passed, too
+        pane: "<div id= \"stacked-chart-div\"><select class=\"opt\">\n" +
+            "\t<option value=\"_1\">1</option>\n" +
+            "\t<option value=\"_2\">2</option>\n" +
+            "</select><br>\n" +
+            "<svg id=\"figure\"></svg></div>",        // DOM elements can be passed, too
         title: 'Statistics',              // an optional pane header
     };
     sidebar.addPanel(statsSidebarPane);
@@ -270,337 +272,122 @@ function testStackedChart() {
     console.log(clubsLayer.getClub(0).getPlayersCountRanked("N"));
     console.log(clubsLayer.getClub(0));*/
 
-    const svgChart = (props, data) => {
-        const {width, height, margin, id, selector} = props;
-        var svg = d3
-            .select(selector)
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .attr("id", id)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-        return {
-            svg,
-            width: width - margin.left - margin.right,
-            height: height - margin.top - margin.bottom
-        };
-    };
-    const decimalRounder = n => {
-        const rounder = Math.pow(10, n);
-        return d => {
-            return Math.round(d * rounder) / rounder;
-        };
-    };
-    const keyConfig = [
-//   { csv: "1", g: "-", color: "#c7001e", label: "Strongly disagree" },
-        {csv: "2", g: "-", color: "#f6a580", label: "Unfavorable"},
-        {csv: "3", g: "n", color: "#cccccc", label: "Neutral"},
-        {csv: "4", g: "+", color: "#92c6db", label: "Favorable"},
-//   { csv: "5", g: "+", color: "#086fad", label: "Strongly agree" }
-    ];
-    const ratioOfLikert = (keys, getN, data) => {
-        const ratioRounder = decimalRounder(3);
-        return data.map(d => {
-            return keys.reduce(
-                (acc, k, i, arr) => {
-                    const {obs, ratio, N} = acc;
-                    const raw = parseInt(d[k], 10);
-                    obs[i] = raw;
-                    ratio[i] = ratioRounder(raw / N);
-                    return acc;
-                },
-                {obs: [], ratio: [], N: getN(d), label: d.Question}
-            );
-        });
-    };
-    const addDataToGroup = rawsAndRatios => {
-        return group => {
-            const {key, series} = group;
-            const items = rawsAndRatios.map((d, i) => {
-                let x0 = 0,
-                    x1;
-                return series.map(g => {
-                    const {idx} = g;
-                    const obs = d.obs[idx],
-                        ratio = d.ratio[idx];
-                    x1 = x0 + ratio;
-                    const r = {obs, ratio, x0, x1};
-                    x0 = x1;
-                    return r;
-                });
-            });
-            const maxes = items.map((d, i) => {
-                return d[d.length - 1].x1;
-            });
-            return {group: key, series, data: items, maxes};
-        };
-    };
-    const plotHorizontalHtmlLegend = props => {
-        const {parentNode, data, className} = props;
-        const g = d3
-            .select(parentNode)
-            .append("div")
-            .attr("class", className);
-        let item = g
-            .selectAll(".legend")
-            .data(data)
-            .enter()
-            .append("div")
-            .attr("class", "legend");
-        item
-            .append("div")
-            .attr("class", "rect")
-            .style("background-color", d => {
-                return d.color;
-            });
-        item
-            .append("div")
-            .attr("class", "label")
-            .text(d => {
-                return d.label;
-            });
-        // d3.selectAll(".legendbox").attr("transform", "translate(" + movesize + ",0)");
-    };
-    const plotYAxis = props => {
-        const {svg, className, yScale} = props;
-        svg
-            .append("g")
-            .attr("class", className)
-            .call(d3.axisLeft(yScale));
-    };
-    const plotZeroLine = props => {
-        const {svg, className, x, ys} = props;
-        const [y1, y2] = ys;
-        svg
-            .append("g")
-            .attr("class", className)
-            .append("line")
-            .attr("x1", x)
-            .attr("x2", x)
-            .attr("y1", y1)
-            .attr("y2", y2);
-    };
-    const plotGroup = (data, svg, config) => {
-        const {
-            getQuestionTransform,
-            getQuestionAxis,
-            getBarX,
-            getBarWidth,
-            getBarHeight,
-            getBarText,
-            getBarColor
-        } = config;
-        svg
-            .append("g")
-            .attr("class", "x axis")
-            .call(
-                getQuestionAxis().tickFormat(d => {
-                    return d3.format(".0%")(Math.abs(d));
-                })
-            );
-        const g = svg
-            .selectAll(".question")
-            .data(data)
-            .enter()
-            .append("g")
-            .attr("class", "question")
-            .attr("transform", getQuestionTransform);
-        var bars = g
-            .selectAll("rect")
-            .data((d, i) => {
-                return d;
-            })
-            .enter()
-            .append("g")
-            .attr("class", "subbar");
-        bars
-            .append("rect")
-            .attr("height", getBarHeight)
-            .attr("x", getBarX)
-            .attr("width", getBarWidth)
-            .style("fill", getBarColor);
-        bars
-            .append("text")
-            .attr("x", getBarX)
-            .attr("y", () => {
-                return getBarHeight() / 2;
-            })
-            .attr("dy", "0.5em")
-            .attr("dx", "0.5em")
-            .style("text-anchor", "begin")
-            .text(getBarText);
-    };
-    const computeLayout = props => {
-        const {
-            alignRight,
-            xScale,
-            yScale,
-            maxes,
-            data,
-            series,
-            questionLabels
-        } = props;
-        const getY = i => {
-            return yScale(questionLabels[i]);
-        };
-        const getBarHeight = () => {
-            return yScale.bandwidth();
-        };
-        const colorScale = d3.scaleOrdinal().range(
-            series.map(d => {
-                return d.color;
-            })
-        );
-        const getQuestionX = (d, i) => {
-            return;
-        };
-        const getQuestionTransform = (d, i) => {
-            const x = alignRight ? xScale(-maxes[i]) : 0;
-            const y = getY(i);
-            return `translate(${x},${y} )`;
-        };
-        const getQuestionAxis = (d, i) => {
-            const [d0, d1] = xScale.domain();
-            const [r0, r1] = xScale.range();
-            const domain = alignRight ? [-d1, -d0] : [d0, d1];
-            const range = alignRight ? [-r1, -r0] : [r0, r1];
-            const scale = d3
-                .scaleLinear()
-                .domain(domain)
-                .rangeRound(range)
-                .nice();
-            return d3.axisTop(scale).tickValues(
-                d3.range(0, d3.max(maxes) + 0.05, 0.1).map(d => {
-                    return alignRight ? -d : d;
-                })
-            );
-        };
-        const getBarX = (d, i) => {
-            return xScale(d.x0);
-        };
-        const getBarWidth = d => {
-            return Math.abs(xScale(d.x1) - xScale(d.x0));
-        };
-        const getBarText = d => {
-            return d.n !== 0 && getBarWidth(d) > 0.3 ? d.obs : "";
-        };
-        const getBarColor = (d, i) => {
-            // console.log(d, i, series[i].label);
-            return colorScale(series[i].label);
-        };
-        return {
-            getQuestionTransform,
-            getQuestionAxis,
-            getBarX,
-            getBarWidth,
-            getBarHeight,
-            getBarText,
-            getBarColor
-        };
-    };
-    d3.csv("raw_data.csv").then(function (data) {
-        const rawsAndRatios = ratioOfLikert(
-            keyConfig.map(d => {
-                return d.csv;
-            }),
-            d => {
-                return d.N;
-            },
-            data
-        );
-        const groups = keyConfig.reduce(
-            (acc, d, i) => {
-                const {ks, groups} = acc;
-                const {g, csv, color, label} = d;
-                let idx = ks.indexOf(g);
-                if (idx === -1) {
-                    idx = ks.length;
-                    ks.push(g);
-                }
-                if (!groups[idx]) {
-                    groups[idx] = {key: g, series: []};
-                }
-                groups[idx].series.push({idx: i, csv, color, label});
-                return {ks, groups};
-            },
-            {ks: [], groups: []}
-        ).groups;
-        const groupsWithData = groups.map(addDataToGroup(rawsAndRatios));
-        plotHorizontalHtmlLegend({
-            parentNode: document.querySelector("#figure"),
-            data: keyConfig.map(d => {
-                return {label: d.label, color: d.color};
-            }),
-            center: 50,
-            className: "legendbox"
-        });
-        const {svg, width, height} = svgChart({
-            margin: {top: 50, right: 20, bottom: 10, left: 65},
-            width: 800,
-            height: 500,
-            selector: "#figure",
-            id: "d3-plot"
-        });
-        const questionLabels = rawsAndRatios.map(function (d) {
-            return d.label;
-        });
-        const yScale = d3
-            .scaleBand()
-            .rangeRound([0, height])
-            .padding(0.3)
-            .domain(questionLabels);
-        const xEnd = d3.sum(groupsWithData, d => {
-            return d3.max(d.maxes);
-        });
-        const leftPadding = 32;
-        const xScale = d3
-            .scaleLinear()
-            .domain([0, xEnd])
-            .rangeRound([0, width - leftPadding])
-            .nice();
-        plotYAxis({svg, className: "y axis", yScale});
-        const svgGroup = svg
-            .append("g")
-            .attr("class", "plot")
-            .attr("transform", "translate(" + leftPadding + "," + 0 + ")");
-        const config = {
-            xScale,
-            yScale,
-            questionLabels
-        };
-        let groupData, xOffset;
-        // -- group
-        groupData = groupsWithData[0];
-        xOffset = xScale(d3.max(groupsWithData[0].maxes));
-        plotGroup(
-            groupData.data,
-            svgGroup
-                .append("g")
-                .attr("class", "negative")
-                .attr("transform", "translate(" + xOffset + "," + 0 + ")"),
-            computeLayout(
-                Object.assign({}, config, groupData, {
-                    alignRight: true
-                })
-            )
-        );
-        // -- group
-        groupData = groupsWithData[2];
-        xOffset = xScale(d3.max(groupsWithData[0].maxes));
-        plotGroup(
-            groupData.data,
-            svgGroup
-                .append("g")
-                .attr("class", "positive")
-                .attr("transform", "translate(" + xOffset + "," + 0 + ")"),
-            computeLayout(Object.assign({}, config, groupData))
-        );
-        plotZeroLine({
-            svg: svgGroup,
-            className: "zero axis",
-            x: xOffset,
-            ys: [0, height]
-        });
+    /*const data = [
+        {month: "Q1-2016", apples_1: -400, bananas_1: 920, apples_2: -196, bananas_2: 840},
+        {month: "Q2-2016", apples_1: -400, bananas_1: 440, apples_2: -960, bananas_2: 600},
+        {month: "Q3-2016", apples_1: -600, bananas_1: 960, apples_2: -640, bananas_2: 640},
+        {month: "Q4-2016", apples_1: -400, bananas_1: 480, apples_2: -640, bananas_2: 320}
+    ];*/
+
+    const data = getNTopClubs(10,clubsLayer.getClubs(), "R").reverse();
+    for (let i = 0; i < data.length; i++) {
+        //we inverse values to have the values spread left and right of the axis
+        data[i].rank_NC_count *= - 1;
+        data[i].rank_P_count *= - 1;
+        data[i].rank_D_count *= - 1;
+    }
+    console.log(data);
+
+    const margin = {top: 35, right: 145, bottom: 35, left: 50},
+        width = 420 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+
+    const svg = d3.select("#figure")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    const y = d3.scaleBand()
+        .rangeRound([height, 0])
+        .padding(0.2);
+
+    const x = d3.scaleLinear()
+        .rangeRound([0, width]);
+
+    const z = d3.scaleOrdinal()
+        .range([
+            "#FFF9C4",
+            "#FFEE58",
+            "#FFB300",
+            "#EF6C00",
+            "#BF360C"]);
+
+    svg.append("g")
+        .attr("class","x-axis");
+
+    svg.append("g")
+        .attr("class", "y-axis");
+
+    const input = d3.selectAll(".opt").property("value");
+
+    d3.selectAll(".opt").on("change", function() {
+        update(data, this.value)
     });
+
+    update(data, input);
+
+    function update(data, input) {
+
+        const keys = ["rank_NC_count","rank_P_count", "rank_F_count","rank_R_count", "rank_N_count"];
+
+        const series = d3.stack()
+            .keys(keys)
+            .offset(d3.stackOffsetDiverging)
+            (data);
+
+        y.domain(data.map(d => d.name));
+
+        x.domain([
+            d3.min(series, stackMin),
+            d3.max(series, stackMax)
+        ]).nice();
+
+        const barGroups = svg.selectAll("g.layer")
+            .data(series);
+
+        barGroups.exit().remove();
+
+        barGroups.enter().insert("g", ".y-axis")
+            .classed('layer', true);
+
+        svg.selectAll("g.layer")
+            .transition().duration(750)
+            .attr("fill", d => z(d.key));
+
+        let bars = svg.selectAll("g.layer").selectAll("rect")
+            .data(function (d) {
+                return d;
+            });
+
+        bars.exit().remove();
+
+        bars = bars
+            .enter()
+            .append("rect")
+            .attr("height", y.bandwidth())
+            .attr("y", d => y(d.data.name))
+            .merge(bars)
+
+        bars.transition().duration(750)
+            .attr("x", d => x(d[0]))
+            .attr("width", d => Math.abs(x(d[1])-x(d[0])));
+
+        svg.selectAll(".y-axis").transition().duration(750)
+            .attr("transform", "translate(" + x(0)  + ",0)")
+            .call(d3.axisLeft(y));
+
+        svg.selectAll(".x-axis").transition().duration(750)
+        //.attr("transform", "translate(0," + x(0) + ")")
+            .call(d3.axisTop(x));
+
+        function stackMin(serie) {
+            return d3.min(serie, function(d) { return d[0]; });
+        }
+
+        function stackMax(serie) {
+            return d3.max(serie, function(d) { return d[1]; });
+        }
+
+    }
 }

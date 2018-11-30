@@ -157,3 +157,8 @@ html, body {
     position: relative;
     color: black;
 }
+
+#stacked-chart-div {
+    margin: auto;
+    height: 850px;
+}
