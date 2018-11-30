@@ -469,8 +469,23 @@ class ClubsLayer extends CustomDataLayer {
 
     onDataPointParsed(dataPoint) {
         let club = new Club(dataPoint);
-        this.markerCluster.addLayer(this.createMarker(club));
+        let marker = this.createMarker(club);
+        this.markerCluster.addLayer(marker);
+        club.marker = marker;
         return club;
+    }
+
+    focusClub(club_id){
+        for (let i = 0; i < this.dataPoints.length; i++) {
+            let point = this.dataPoints[i];
+            if(point.id === club_id){
+                map.once("moveend zoomend", () => {
+                    point.marker.openPopup();
+                });
+                sidebar.moveViewTo({lat: point.lat, lng: point.long},"open",10);
+                break;
+            }
+        }
     }
 }
 

@@ -75,10 +75,8 @@ function createUI() {
     statsSidebarPane = {
         id: 'statsPane',                     // UID, used to access the panel
         tab: '<i class="fa fa-chart-bar "></i>',  // content can be passed as HTML string,
-        pane: "<div id= \"stacked-chart-div\"><select class=\"opt\">\n" +
-            "\t<option value=\"_1\">1</option>\n" +
-            "\t<option value=\"_2\">2</option>\n" +
-            "</select><br>\n" +
+        pane: "<div id= \"stacked-chart-div\">" +
+            "<div id= \"stacked-chart-legend\" class='legend'></div>" +
             "<svg id=\"figure\"></svg></div>",        // DOM elements can be passed, too
         title: 'Statistics',              // an optional pane header
     };
@@ -258,28 +256,9 @@ function loadPlayers() {
     });
 }
 
-function getNTopClubs(n, clubs, rank = "N") {
-    let start = new Date();
-    let result =  clubs.sort((club1, club2) => {
-        return club1.getPlayersCountRanked(rank) < club2.getPlayersCountRanked(rank);
-    }).slice(0,n);
-    //console.debug(`Sorted in ${new Date - start}ms`);
-    return result;
-}
-
 function testStackedChart() {
-    /*console.log(players);
-    console.log(clubsLayer.getClub(0).getPlayersCountRanked("N"));
-    console.log(clubsLayer.getClub(0));*/
+    const data = getNTopClubs(10,clubsLayer.getClubs(), "N").reverse();
 
-    /*const data = [
-        {month: "Q1-2016", apples_1: -400, bananas_1: 920, apples_2: -196, bananas_2: 840},
-        {month: "Q2-2016", apples_1: -400, bananas_1: 440, apples_2: -960, bananas_2: 600},
-        {month: "Q3-2016", apples_1: -600, bananas_1: 960, apples_2: -640, bananas_2: 640},
-        {month: "Q4-2016", apples_1: -400, bananas_1: 480, apples_2: -640, bananas_2: 320}
-    ];*/
-
-    const data = getNTopClubs(10,clubsLayer.getClubs(), "R").reverse();
     for (let i = 0; i < data.length; i++) {
         //we inverse values to have the values spread left and right of the axis
         data[i].rank_NC_count *= - 1;
@@ -290,7 +269,31 @@ function testStackedChart() {
 
     const margin = {top: 35, right: 145, bottom: 35, left: 50},
         width = 420 - margin.left - margin.right,
-        height = 500 - margin.top - margin.bottom;
+        height = 450 - margin.top - margin.bottom;
+
+    const keyLegendMapping = [
+        {
+            name: "National",
+            key: "rank_N_count"
+        },
+        {
+            name: "Regional",
+            key: "rank_R_count"
+        },
+        {
+            name: "Departmental",
+            key: "rank_D_count"
+        },
+        {
+            name: "Communal",
+            key: "rank_P_count"
+        },
+        {
+            name: "No Ranking",
+            key: "rank_NC_count"
+        },
+
+    ];
 
     const svg = d3.select("#figure")
         .attr("width", width + margin.left + margin.right)
@@ -305,13 +308,15 @@ function testStackedChart() {
     const x = d3.scaleLinear()
         .rangeRound([0, width]);
 
+    const colors = [
+        "#BF360C",
+        "#EF6C00",
+        "#FFB300",
+        "#FFEE58",
+        "#FFF9C4",];
+
     const z = d3.scaleOrdinal()
-        .range([
-            "#FFF9C4",
-            "#FFEE58",
-            "#FFB300",
-            "#EF6C00",
-            "#BF360C"]);
+        .range(colors);
 
     svg.append("g")
         .attr("class","x-axis");
@@ -319,17 +324,24 @@ function testStackedChart() {
     svg.append("g")
         .attr("class", "y-axis");
 
-    const input = d3.selectAll(".opt").property("value");
-
     d3.selectAll(".opt").on("change", function() {
         update(data, this.value)
     });
 
-    update(data, input);
+    update(data);
 
     function update(data, input) {
+        let tempDiv = L.DomUtil.create('div', 'legend');
 
-        const keys = ["rank_NC_count","rank_P_count", "rank_F_count","rank_R_count", "rank_N_count"];
+        // loop through our density intervals and generate a label with a colored square for each interval
+        for (let i = 0; i < keyLegendMapping.length; i++) {
+            tempDiv.innerHTML +=
+                `<i style="background: ${colors[i]}"></i>` +
+                keyLegendMapping[i].name + '<br>';
+        }
+        document.getElementById("stacked-chart-legend").innerHTML = tempDiv.innerHTML;
+
+        const keys = keyLegendMapping.map(mapping => mapping.key);
 
         const series = d3.stack()
             .keys(keys)
@@ -374,22 +386,24 @@ function testStackedChart() {
             .append("rect")
             .attr("height", y.bandwidth())
             .attr("y", d => y(d.data.name))
-            .on('mouseover', d => {
-                div
-                    .transition()
+            .on('mouseover', function(d) {
+                div.transition()
                     .duration(200)
                     .style('opacity', 0.9);
-                div
-                    .html(d.data.name)
+                div.html(d.data.name)
                     .style('left', d3.event.pageX + 'px')
                     .style('top', d3.event.pageY - 28 + 'px');
             })
-            .on('mouseout', () => {
+            .on('mouseout', function() {
                 div
                     .transition()
                     .duration(500)
                     .style('opacity', 0)
-            }).merge(bars);
+            })
+            .on('click', function() {
+                clubsLayer.focusClub(this.__data__.data.id);
+            })
+            .merge(bars);
 
         bars.transition().duration(750)
             .attr("x", d => x(d[0]))
@@ -401,7 +415,7 @@ function testStackedChart() {
 
         svg.selectAll(".x-axis").transition().duration(750)
         //.attr("transform", "translate(0," + x(0) + ")")
-            .call(d3.axisTop(x));
+            .call(d3.axisTop(x).ticks(5));
 
         function stackMin(serie) {
             return d3.min(serie, function(d) { return d[0]; });

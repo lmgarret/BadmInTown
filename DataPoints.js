@@ -38,6 +38,7 @@ class Club extends GraphicalDataPoint {
         this.rank_D_count = 0;
         this.rank_P_count = 0;
         this.rank_NC_count = 0;
+        this.rank_avg = 0;
     }
 
     getPlayers() {
@@ -52,6 +53,8 @@ class Club extends GraphicalDataPoint {
         this.updateRankCount(player, RANKS_DEPARTMENTAL, c => this.rank_D_count += c);
         this.updateRankCount(player, RANKS_COMMUNAL, c => this.rank_P_count += c);
         this.updateRankCount(player, RANKS_NONE, c => this.rank_NC_count += c);
+
+        this.rank_avg = (this.rank_avg * (this.players.length - 1) + player.rank_avg) / this.players.length;
     }
 
     getPlayersCountRanked(rank) {
@@ -84,6 +87,10 @@ class Club extends GraphicalDataPoint {
         }
 
         callback(count);
+    }
+
+    getRankAVG(){
+        return this.rank_avg;
     }
 
     _getPlayersCountRanked(ranks) {
@@ -139,6 +146,16 @@ class Player {
     }
 }
 
-class Rank {
 
+function getNTopClubs(n, clubs, rank = "N") {
+    if(rank === "avg"){
+        return clubs.sort((club1, club2) => {
+            return club1.getRankAVG() < club2.getRankAVG();
+        }).slice(0,n);
+    }else {
+        return clubs.sort((club1, club2) => {
+            return club1.getPlayersCountRanked(rank) < club2.getPlayersCountRanked(rank);
+        }).slice(0,n);
+    }
 }
+
