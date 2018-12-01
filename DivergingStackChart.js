@@ -2,7 +2,7 @@
 class DivergingStackChart{
     constructor(){
         this.margin = {top: 25, right: 20, bottom: 10, left: 10};
-        this.width = 360 - this.margin.left - this.margin.right;
+        this.width = 460 - this.margin.left - this.margin.right;
         this.height = 400 - this.margin.top - this.margin.bottom;
 
         this.keyLegendMapping = [
@@ -19,12 +19,12 @@ class DivergingStackChart{
                 key: "rank_D_count"
             },
             {
-                name: "Communal (P)",
-                key: "rank_P_count"
-            },
-            {
                 name: "No Ranking (NC)",
                 key: "rank_NC_count"
+            },
+            {
+                name: "Communal (P)",
+                key: "rank_P_count"
             },
 
         ];
@@ -47,7 +47,8 @@ class DivergingStackChart{
             "#EF6C00",
             "#FFB300",
             "#FFEE58",
-            "#FFF9C4",];
+            "#FFF9C4",
+        ];
 
         this.z = d3.scaleOrdinal()
             .range(this.colors);
@@ -60,28 +61,61 @@ class DivergingStackChart{
 
     }
 
-    formatData(data, title){
+    formatData(data){
+        let formattedData = [];
+
         for (let i = 0; i < data.length; i++) {
-            //we inverse values to have the values spread left and right of the axis
-            data[i].rank_P_count *= - 1;
-            data[i].rank_NC_count *= - 1;
-            //data[i].rank_D_count *= - 1;
+            let d = {
+                id: data[i].id,
+                name: data[i].name,
+                rank_N_count: data[i].rank_N_count,
+                rank_R_count: data[i].rank_R_count,
+                rank_D_count: data[i].rank_D_count,
+                //we inverse values to have the values spread left and right of the axis
+                rank_P_count: - data[i].rank_P_count,
+                rank_NC_count: - data[i].rank_NC_count,
+
+            };
+            formattedData.push(d);
         }
-        return data;
+
+        formattedData = formattedData.reverse();
+
+        /*if(this.data !== undefined) {
+            for (let i = 0; i < this.data.length - formattedData.length; i++) {
+                formattedData.push({
+                    //push stub value to fill if not enough clubs to display
+                    id: -1 * i,
+                    name: " ".repeat(i),
+                    rank_N_count: 0,
+                    rank_R_count: 0,
+                    rank_D_count: 0,
+                    rank_P_count: 0,
+                    rank_NC_count: 0,
+                });
+            }
+        }*/
+        return formattedData;
+    }
+
+    _createLegendItemHTML(keyMapping){
+        return `<i style="background: ${this.z(keyMapping.key)}"></i>` +
+            keyMapping.name + '<br>'
     }
 
     update(data,title) {
-        this.data = this.formatData(data.reverse());
+        this.data = this.formatData(data);
 
         //update the legend
         let legendDiv = L.DomUtil.create('div', 'legend');
 
         // loop through our density intervals and generate a label with a colored square for each interval
-        for (let i = 0; i < this.keyLegendMapping.length; i++) {
-            legendDiv.innerHTML +=
-                `<i style="background: ${this.colors[i]}"></i>` +
-                this.keyLegendMapping[i].name + '<br>';
-        }
+        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[0]);
+        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[1]);
+        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[2]);
+        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[4]);
+        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[3]);
+
         document.getElementById("stacked-chart-legend").innerHTML = legendDiv.innerHTML;
 
 
@@ -96,7 +130,7 @@ class DivergingStackChart{
         const series = d3.stack()
             .keys(keys)
             .offset(d3.stackOffsetDiverging)
-            .order(d3.stackOrderInsideOut)
+            .order(d3.stackOrderReverse)
             (this.data);
 
         this.y.domain(this.data.map(d => d.name));
@@ -154,6 +188,7 @@ class DivergingStackChart{
         bars = bars
             .enter()
             .append("rect")
+            .merge(bars)
             .attr("height", this.y.bandwidth())
             .attr("y", d => this.y(d.data.name))
             .on('mouseover', function(d) {
@@ -174,8 +209,7 @@ class DivergingStackChart{
             })
             .on('click', function() {
                 clubsLayer.focusClub(this.__data__.data.id);
-            })
-            .merge(bars);
+            });
 
         bars.transition().duration(750)
             .attr("x", d => this.x(d[1]))

@@ -89,7 +89,7 @@ class Club extends GraphicalDataPoint {
         callback(count);
     }
 
-    getRankAVG(){
+    getRankAVG() {
         return this.rank_avg;
     }
 
@@ -133,7 +133,7 @@ class Tournament extends GraphicalDataPoint {
 }
 
 class Player {
-    constructor(data){
+    constructor(data) {
         this.license = _parseNumber(data.license);
         this.name = data.name;
         this.surname = data.surname;
@@ -147,15 +147,29 @@ class Player {
 }
 
 
-function getNTopClubs(n, clubs, rank = "N") {
-    if(rank === "avg"){
-        return clubs.sort((club1, club2) => {
-            return club1.getRankAVG() < club2.getRankAVG();
-        }).slice(0,n);
-    }else {
-        return clubs.sort((club1, club2) => {
-            return club1.getPlayersCountRanked(rank) < club2.getPlayersCountRanked(rank);
-        }).slice(0,n);
-    }
+function getNTopClubs(n, clubs) {
+    const ranks = ["N", "R", "D", "P", "NC"];
+
+    return clubs.sort((club1, club2) => {
+        for (let i = 0; i < ranks.length; i++) {
+            let r = ranks[i];
+            if (club1.getPlayersCountRanked(r) < club2.getPlayersCountRanked(r)) {
+                return true
+            } else if (club1.getPlayersCountRanked(r) > club2.getPlayersCountRanked(r)) {
+                return false
+            }
+        }
+
+        return true;
+    }).slice(0, n);
 }
 
+function getClubsInDepartment(department_code, clubs) {
+    let result = [];
+    for (let i = 0; i < clubs.length; i++) {
+        if (clubs[i].department_code === department_code) {
+            result.push(clubs[i]);
+        }
+    }
+    return result;
+}

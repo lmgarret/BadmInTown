@@ -329,8 +329,14 @@ class CustomDataLayer {
             dashArray: '',
             fillOpacity: 0,
         });
+        let departmenClubs
         map.once("moveend zoomend", () => {
-            sidebar.close("infoPane");
+            let clubs = getClubsInDepartment(layer.feature.properties.code,this.dataPoints);
+            const data = getNTopClubs(10,clubs);
+
+            stackChart.update(data, `Top 10 Clubs: ${layer.feature.properties.nom}`)
+            sidebar.open("statsPane");
+            //sidebar.close("infoPane");
         });
     }
 

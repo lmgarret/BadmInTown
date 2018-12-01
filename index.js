@@ -14,6 +14,7 @@ let sidebar;
 let statsSidebarPane;
 let infoSidebarPane;
 let stackChart;
+let topClubs;
 main();
 
 function main() {
@@ -22,16 +23,16 @@ function main() {
             activeLayer = clubsLayer;
             let promiseClubs = clubsLayer.loadDataPoints(map);
 
-            Promise.all([promiseClubs]).then(() => {
+            Promise.all([promiseClubs, loadPlayers()]).then(() => {
                 sidebar.addPanel(clubsLayer.getSideBarPanelButton());
                 clubsLayer.show();
                 sidebar.open("home");
-                loadPlayers().then(() => {
-                    console.log("Building stacked chart...");
-                    stackChart = new DivergingStackChart();
-                    const data = getNTopClubs(10,clubsLayer.getClubs(), "N");
-                    stackChart.update(data,"Top 10 Clubs: France");
-                });
+
+                console.log("Building stacked chart...");
+
+                stackChart = new DivergingStackChart();
+                topClubs = getNTopClubs(10, clubsLayer.getClubs(), "N");
+                stackChart.update(topClubs, "Top 10 Clubs: France");
             });
         });
 
@@ -121,6 +122,7 @@ function createUI() {
                 click: function (data) {
                     switch (data.target.id) {
                         case "franceButton":
+                            stackChart.update(topClubs, "Top 10 Clubs: France");
                             map.setView(INITIAL_COORD, INITIAL_ZOOM);
                             activeLayer.deselectAllDepartments();
                             break;
@@ -251,7 +253,7 @@ function loadPlayers() {
         try {
             let player = new Player(d);
             player.club = clubsLayer.getClub(player.club_id);
-            if(player.club !== undefined){
+            if (player.club !== undefined) {
                 player.club.addPlayer(player);
             }
             players.push(player);
