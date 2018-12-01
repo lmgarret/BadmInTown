@@ -13,6 +13,7 @@ let loadingBar;
 let sidebar;
 let statsSidebarPane;
 let infoSidebarPane;
+let stackChart;
 main();
 
 function main() {
@@ -27,7 +28,9 @@ function main() {
                 sidebar.open("home");
                 loadPlayers().then(() => {
                     console.log("Building stacked chart...");
-                    testStackedChart();
+                    stackChart = new DivergingStackChart();
+                    const data = getNTopClubs(10,clubsLayer.getClubs(), "N");
+                    stackChart.update(data);
                 });
             });
         });
@@ -256,206 +259,4 @@ function loadPlayers() {
             return undefined;
         }
     });
-}
-
-function testStackedChart() {
-    const data = getNTopClubs(10,clubsLayer.getClubs(), "N").reverse();
-
-    for (let i = 0; i < data.length; i++) {
-        //we inverse values to have the values spread left and right of the axis
-        data[i].rank_P_count *= - 1;
-        data[i].rank_NC_count *= - 1;
-        //data[i].rank_D_count *= - 1;
-    }
-    //console.log(data);
-
-    const margin = {top: 25, right: 20, bottom: 20, left: 10},
-        width = 360 - margin.left - margin.right,
-        height = 450 - margin.top - margin.bottom;
-
-    const keyLegendMapping = [
-        {
-            name: "National (N)",
-            key: "rank_N_count"
-        },
-        {
-            name: "Regional (R)",
-            key: "rank_R_count"
-        },
-        {
-            name: "Departmental (D)",
-            key: "rank_D_count"
-        },
-        {
-            name: "Communal (P)",
-            key: "rank_P_count"
-        },
-        {
-            name: "No Ranking (NC)",
-            key: "rank_NC_count"
-        },
-
-    ];
-
-    const svg = d3.select("#figure")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    const y = d3.scaleBand()
-        .rangeRound([height, 0])
-        .padding(0.2);
-
-    const x = d3.scaleLinear()
-        .rangeRound([0, width]);
-
-    const colors = [
-        "#BF360C",
-        "#EF6C00",
-        "#FFB300",
-        "#FFEE58",
-        "#FFF9C4",];
-
-    const z = d3.scaleOrdinal()
-        .range(colors);
-
-    svg.append("g")
-        .attr("class","axis x-axis");
-
-    svg.append("g")
-        .attr("class", "axis y-axis");
-
-    d3.selectAll(".opt").on("change", function() {
-        update(data, this.value)
-    });
-
-    update(data);
-
-    function update(data, input) {
-        //update the legend
-        let tempDiv = L.DomUtil.create('div', 'legend');
-
-        // loop through our density intervals and generate a label with a colored square for each interval
-        for (let i = 0; i < keyLegendMapping.length; i++) {
-            tempDiv.innerHTML +=
-                `<i style="background: ${colors[i]}"></i>` +
-                keyLegendMapping[i].name + '<br>';
-        }
-        document.getElementById("stacked-chart-legend").innerHTML = tempDiv.innerHTML;
-
-        //update the chart
-        const keys = keyLegendMapping.map(mapping => mapping.key);
-
-        const series = d3.stack()
-            .keys(keys)
-            .offset(d3.stackOffsetDiverging)
-            .order(d3.stackOrderInsideOut)
-            (data);
-
-        y.domain(data.map(d => d.name));
-
-        x.domain([
-            d3.max(series, stackMax),
-            d3.min(series, stackMin),
-        ]).nice();
-
-        const barGroups = svg.selectAll("g.layer")
-            .data(series);
-
-        barGroups.exit().remove();
-
-        barGroups.enter().insert("g", ".y-axis")
-            .classed('layer', true);
-
-        svg.selectAll("g.layer")
-            .transition().duration(750)
-            .attr("fill", d => z(d.key));
-
-        let bars = svg.selectAll("g.layer").selectAll("rect")
-            .data(function (d) {
-                return d;
-            });
-
-        bars.exit().remove();
-
-        const div = d3
-            .select('body')
-            .append('div')
-            .attr('class', 'tooltip')
-            .style('opacity', 0);
-
-        function getRankFromRange(range, club){
-            if (range[1] <= 0 && range[0] <=0){
-                if(range[1] === 0){
-                    return "P";
-                } else {
-                    return "NC";
-                }
-            } else if (range[0] >=0 && range[1] >= 0){
-                if (range[0] === 0){
-                    return "D";
-                } else if(range[0] === club.rank_D_count){
-                    return "R";
-                } else {
-                    return "N";
-                }
-            } else {
-                return "?";
-            }
-        }
-
-        bars = bars
-            .enter()
-            .append("rect")
-            .attr("height", y.bandwidth())
-            .attr("y", d => y(d.data.name))
-            .on('mouseover', function(d) {
-                d3.select(this).classed("bar-chart-hover", true);
-                div.transition()
-                    .duration(200)
-                    .style('opacity', 0.9);
-                div.html(`${Math.abs(d[1] - d[0])} ${getRankFromRange(d,d.data)}`)
-                    .style('left', d3.event.pageX + 'px')
-                    .style('top', d3.event.pageY - 28 + 'px');
-            })
-            .on('mouseout', function() {
-                d3.select(this).classed("bar-chart-hover", false);
-                div
-                    .transition()
-                    .duration(500)
-                    .style('opacity', 0)
-            })
-            .on('click', function() {
-                clubsLayer.focusClub(this.__data__.data.id);
-            })
-            .merge(bars);
-
-        bars.transition().duration(750)
-            .attr("x", d => x(d[1]))
-            .attr("width", d => Math.abs(x(d[0])-x(d[1])));
-
-        svg.selectAll(".y-axis").transition().duration(750)
-            .attr("transform", "translate(" + x(0)  + ",0)")
-            .call(d3.axisRight(y));
-
-        const formatter = d3.format("0");
-
-        svg.selectAll(".x-axis").transition().duration(750)
-        //.attr("transform", "translate(0," + x(0) + ")")
-            .call(d3.axisTop(x).ticks(8)
-                .tickFormat(function (d) {
-                    if (d < 0) d = -d; // No negative labels
-                    return formatter(d);
-                }));
-
-        function stackMin(serie) {
-            return d3.min(serie, function(d) { return d[0]; });
-        }
-
-        function stackMax(serie) {
-            return d3.max(serie, function(d) { return d[1]; });
-        }
-
-    }
 }
