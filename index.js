@@ -30,7 +30,7 @@ function main() {
                     console.log("Building stacked chart...");
                     stackChart = new DivergingStackChart();
                     const data = getNTopClubs(10,clubsLayer.getClubs(), "N");
-                    stackChart.update(data);
+                    stackChart.update(data,"Top 10 Clubs: France");
                 });
             });
         });
@@ -77,10 +77,12 @@ function createUI() {
 
     statsSidebarPane = {
         id: 'statsPane',                     // UID, used to access the panel
-        tab: '<i class="fa fa-chart-bar "></i>',  // content can be passed as HTML string,
         pane: "<div id= \"stacked-chart-div\">" +
+            "<div id= \"stacked-chart-title\" class='legend'></div>" +
+            "<svg id=\"figure\"></svg>" +       // DOM elements can be passed, too
             "<div id= \"stacked-chart-legend\" class='legend'></div>" +
-            "<svg id=\"figure\"></svg></div>",        // DOM elements can be passed, too
+            "</div>",
+        tab: '<i class="fa fa-chart-bar "></i>',  // content can be passed as HTML string,
         title: 'Statistics',              // an optional pane header
     };
     sidebar.addPanel(statsSidebarPane);

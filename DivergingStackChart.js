@@ -1,9 +1,9 @@
 
 class DivergingStackChart{
     constructor(){
-        this.margin = {top: 25, right: 20, bottom: 20, left: 10};
+        this.margin = {top: 25, right: 20, bottom: 10, left: 10};
         this.width = 360 - this.margin.left - this.margin.right;
-        this.height = 450 - this.margin.top - this.margin.bottom;
+        this.height = 400 - this.margin.top - this.margin.bottom;
 
         this.keyLegendMapping = [
             {
@@ -60,7 +60,7 @@ class DivergingStackChart{
 
     }
 
-    formatData(data){
+    formatData(data, title){
         for (let i = 0; i < data.length; i++) {
             //we inverse values to have the values spread left and right of the axis
             data[i].rank_P_count *= - 1;
@@ -70,19 +70,25 @@ class DivergingStackChart{
         return data;
     }
 
-    update(data) {
+    update(data,title) {
         this.data = this.formatData(data.reverse());
 
         //update the legend
-        let tempDiv = L.DomUtil.create('div', 'legend');
+        let legendDiv = L.DomUtil.create('div', 'legend');
 
         // loop through our density intervals and generate a label with a colored square for each interval
         for (let i = 0; i < this.keyLegendMapping.length; i++) {
-            tempDiv.innerHTML +=
+            legendDiv.innerHTML +=
                 `<i style="background: ${this.colors[i]}"></i>` +
                 this.keyLegendMapping[i].name + '<br>';
         }
-        document.getElementById("stacked-chart-legend").innerHTML = tempDiv.innerHTML;
+        document.getElementById("stacked-chart-legend").innerHTML = legendDiv.innerHTML;
+
+
+        //update the title
+        let titleDiv = L.DomUtil.create('div', 'title');
+        titleDiv.innerHTML += `<b>${title}</b></br>`;
+        document.getElementById("stacked-chart-title").innerHTML = titleDiv.innerHTML;
 
         //update the chart
         const keys = this.keyLegendMapping.map(mapping => mapping.key);
