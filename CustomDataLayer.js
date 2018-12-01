@@ -464,7 +464,12 @@ class ClubsLayer extends CustomDataLayer {
     }
 
     getClub(id) {
-        return this.dataPoints[id];
+        for (let i = 0; i < this.dataPoints.length; i++) {
+            if(this.dataPoints[i].id === id){
+                return this.dataPoints[i];
+            }
+        }
+        return undefined;
     }
 
     onDataPointParsed(dataPoint) {

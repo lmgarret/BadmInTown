@@ -246,7 +246,9 @@ function loadPlayers() {
         try {
             let player = new Player(d);
             player.club = clubsLayer.getClub(player.club_id);
-            player.club.addPlayer(player);
+            if(player.club !== undefined){
+                player.club.addPlayer(player);
+            }
             players.push(player);
             return player;
         } catch (e) {
@@ -265,7 +267,7 @@ function testStackedChart() {
         data[i].rank_NC_count *= - 1;
         //data[i].rank_D_count *= - 1;
     }
-    console.log(data);
+    //console.log(data);
 
     const margin = {top: 25, right: 20, bottom: 20, left: 10},
         width = 360 - margin.left - margin.right,
@@ -273,23 +275,23 @@ function testStackedChart() {
 
     const keyLegendMapping = [
         {
-            name: "National",
+            name: "National (N)",
             key: "rank_N_count"
         },
         {
-            name: "Regional",
+            name: "Regional (R)",
             key: "rank_R_count"
         },
         {
-            name: "Departmental",
+            name: "Departmental (D)",
             key: "rank_D_count"
         },
         {
-            name: "Communal",
+            name: "Communal (P)",
             key: "rank_P_count"
         },
         {
-            name: "No Ranking",
+            name: "No Ranking (NC)",
             key: "rank_NC_count"
         },
 
@@ -383,6 +385,25 @@ function testStackedChart() {
             .attr('class', 'tooltip')
             .style('opacity', 0);
 
+        function getRankFromRange(range, club){
+            if (range[1] <= 0 && range[0] <=0){
+                if(range[1] === 0){
+                    return "P";
+                } else {
+                    return "NC";
+                }
+            } else if (range[0] >=0 && range[1] >= 0){
+                if (range[0] === 0){
+                    return "D";
+                } else if(range[0] === club.rank_D_count){
+                    return "R";
+                } else {
+                    return "N";
+                }
+            } else {
+                return "?";
+            }
+        }
 
         bars = bars
             .enter()
@@ -394,7 +415,7 @@ function testStackedChart() {
                 div.transition()
                     .duration(200)
                     .style('opacity', 0.9);
-                div.html(d.data.name)
+                div.html(`${Math.abs(d[1] - d[0])} ${getRankFromRange(d,d.data)}`)
                     .style('left', d3.event.pageX + 'px')
                     .style('top', d3.event.pageY - 28 + 'px');
             })
