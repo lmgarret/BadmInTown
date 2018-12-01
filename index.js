@@ -24,7 +24,8 @@ function main() {
             let promiseClubs = clubsLayer.loadDataPoints(map);
 
             Promise.all([promiseClubs, loadPlayers()]).then(() => {
-                sidebar.addPanel(clubsLayer.getSideBarPanelButton());
+                //TODO see how to integrate this
+                //sidebar.addPanel(clubsLayer.getSideBarPanelButton());
                 clubsLayer.show();
                 sidebar.open("home");
 
@@ -214,7 +215,7 @@ function toggleLayerButton(event) {
     let html = "Click on a data point to get more info about it.";
     let paneOptions = {
         title: title,
-    }
+    };
     sidebar.updatePaneHTML("infoPane", html, paneOptions);
 
     if (clubsLayer.visible) {

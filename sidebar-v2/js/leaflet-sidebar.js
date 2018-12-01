@@ -202,7 +202,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      * @param {string} id - The ID of the tab to show (without the # character)
      * @returns {L.Control.Sidebar}
      */
-    open: function(id, target) {
+    open: function(id, target, zoom) {
         var i, child, tab;
 
         // If panel is disabled, stop right here
@@ -237,16 +237,16 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
 
             if (this.options.autopan){
                 if (target){
-                    this.moveViewTo(target,"open");
+                    this.moveViewTo(target,"open",zoom);
                 }else{
                     this._panMap('open');
                 }
             } else if (target){
-                this.moveViewTo(target,"open");
+                this.moveViewTo(target,"open",zoom);
             }
         } else {
             if (target){
-                this.moveViewTo(target,"open");
+                this.moveViewTo(target,"open",zoom);
             }
         }
 

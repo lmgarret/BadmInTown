@@ -329,12 +329,11 @@ class CustomDataLayer {
             dashArray: '',
             fillOpacity: 0,
         });
-        let departmenClubs
         map.once("moveend zoomend", () => {
             let clubs = getClubsInDepartment(layer.feature.properties.code,this.dataPoints);
             const data = getNTopClubs(10,clubs);
 
-            stackChart.update(data, `Top 10 Clubs: ${layer.feature.properties.nom}`)
+            stackChart.update(data, `Top ${data.length} Clubs: ${layer.feature.properties.nom}`)
             sidebar.open("statsPane");
             //sidebar.close("infoPane");
         });
@@ -346,16 +345,17 @@ class CustomDataLayer {
             title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
             let html = `<b>Name:</b> ${dataPoint.name}(${dataPoint.short_name}) </br>`
                 + `<b>City:</b> ${dataPoint.city_name}`;
+            let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
             let paneOptions = {
                 title: title,
                 locate: {
                     latlng: e.latlng,
-                    zoom: map.getZoom(),
+                    zoom: zoom,
                     callback: options.locate.callback
                 }
             };
             sidebar.updatePaneHTML("infoPane", html, paneOptions);
-            sidebar.open("infoPane", e.latlng);
+            sidebar.open("infoPane", e.latlng, zoom);
         }
     }
 
@@ -487,14 +487,30 @@ class ClubsLayer extends CustomDataLayer {
     }
 
     focusClub(club_id){
+        let club;
         for (let i = 0; i < this.dataPoints.length; i++) {
             let point = this.dataPoints[i];
             if(point.id === club_id){
-                map.once("moveend zoomend", () => {
-                    point.marker.openPopup();
-                });
-                sidebar.moveViewTo({lat: point.lat, lng: point.long},"open",10);
+                club = point;
                 break;
+            }
+        }
+
+        if (club !== undefined){
+            let zoom = 11;
+            let options = {
+                locate: {
+                    callback: () => {
+                        if (!club.marker.getPopup().isOpen()) {
+                            club.marker.openPopup();
+                        }
+                    },
+                    zoom: zoom
+                }
+            };
+            this.onDataPointClicked(club, options).bind(this)({latlng: {lat: club.lat, lng: club.long}});
+            if (!club.marker.getPopup().isOpen()) {
+                club.marker.openPopup();
             }
         }
     }
