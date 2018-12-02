@@ -486,17 +486,17 @@ class ClubsLayer extends CustomDataLayer {
         return club;
     }
 
-    focusClub(club_id){
+    focusClub(club_id) {
         let club;
         for (let i = 0; i < this.dataPoints.length; i++) {
             let point = this.dataPoints[i];
-            if(point.id === club_id){
+            if (point.id === club_id) {
                 club = point;
                 break;
             }
         }
 
-        if (club !== undefined){
+        if (club !== undefined) {
             let zoom = 11;
             let options = {
                 locate: {
@@ -512,6 +512,26 @@ class ClubsLayer extends CustomDataLayer {
             if (!club.marker.getPopup().isOpen()) {
                 club.marker.openPopup();
             }
+        }
+    }
+    onDataPointClicked(dataPoint, options){
+        return (e) => {
+            let title = this.getDataType();
+            title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
+            let rawHtml = dataPoint.html;
+            rawHtml = rawHtml.replace(/(\r\n|\n|\r)/gm,"");
+            let html = /<div[^>]*>(.*)<\/div>/gm.exec(rawHtml);
+            let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
+            let paneOptions = {
+                title: title,
+                locate: {
+                    latlng: e.latlng,
+                    zoom: zoom,
+                    callback: options.locate.callback
+                }
+            };
+            sidebar.updatePaneHTML("infoPane", html[1],paneOptions);
+            sidebar.open("infoPane",e.latlng, zoom);
         }
     }
 }
@@ -562,6 +582,49 @@ class TournamentsLayer extends CustomDataLayer {
         let tournament = new Tournament(dataPoint);
         this.markerCluster.addLayer(this.createMarker(tournament));
         return tournament;
+    }
+
+    onDataPointClicked(dataPoint, options){
+        return (e) => {
+            function getPrice() {
+              let prices = "";
+              if(dataPoint.price_1_tab != "") {
+                prices = prices + `Un tableau: ${dataPoint.price_1_tab}€ <br>`;
+              }
+              if(dataPoint.price_2_tabs != "") {
+                prices = prices + `Deux tableaux: ${dataPoint.price_2_tabs}€ <br>`;
+              }
+              if(dataPoint.price_3_tabs != "") {
+                prices = prices + `Trois tableaus: ${dataPoint.price_3_tabs}€ <br>`;
+              }
+              return prices;
+            }
+            let title = this.getDataType();
+            title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
+            let html = `<div style="padding: .5em; margin: 0 auto; width:45em; 
+            background-color: #FFFFFF">
+            <span style="font-size:2em; font-weight: bold; ">${dataPoint.name}</span>
+            <table class="formulaire" 
+            cellpadding="0" summary="description du tournoi"><tr>
+            <td class="formulaire1">Date</td><td class="forminfo">${dataPoint.start_date}</td></tr>
+            <tr>
+            <td class="formulaire1"><a href="http://badiste.fr/${dataPoint.url}">Lien du tournoi</td><td class="forminfo"></td></tr>
+            <tr>
+            <td class="formulaire1">Prix</td><td class="forminfo">${getPrice()}</td></tr>
+            <tr></table></div>`;
+            let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
+            let paneOptions = {
+                title: title,
+                locate: {
+                    latlng: e.latlng,
+                    zoom: zoom,
+                    callback: options.locate.callback
+                }
+            };
+            console.log(html)
+            sidebar.updatePaneHTML("infoPane", html,paneOptions);
+            sidebar.open("infoPane",e.latlng, zoom);
+        }
     }
 }
 
