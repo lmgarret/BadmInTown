@@ -2,8 +2,7 @@ let FRANCE_GEOJSON_PATH = "geojson/france_departements_all_low.geojson";
 const CLUSTER_VISIBILITY_ZOOM = 8;
 
 
-
-switch(window.location.protocol) {
+switch (window.location.protocol) {
     case 'file:':
         //dev file, lower quality thus faster loading times
         FRANCE_GEOJSON_PATH = "geojson/france_departements_all_dev.geojson";
@@ -14,7 +13,6 @@ switch(window.location.protocol) {
         FRANCE_GEOJSON_PATH = "geojson/france_departements_all_low.geojson";
         break;
 }
-
 
 
 class CustomDataLayer {
@@ -60,14 +58,7 @@ class CustomDataLayer {
      * @param dataPoint
      */
     onDataPointParsed(dataPoint) {
-        if (dataPoint.lat !== "" && dataPoint.long !== "") {
-            dataPoint.lat = parseFloat(dataPoint.lat);
-            dataPoint.long = parseFloat(dataPoint.long);
-            this.dataPoints.push(dataPoint);
-            this.markerCluster.addLayer(this.createMarker(dataPoint));
-        } else {
-            console.log(`${this.getDataType()} ${dataPoint.name} has no coord.`);
-        }
+        // Override in child classes to parse more in details
         return dataPoint;
     }
 
@@ -81,17 +72,24 @@ class CustomDataLayer {
         this.markerCluster = this.createMarkerCluster();
 
         let promiseDepartment = d3.json(FRANCE_GEOJSON_PATH, d => this.onDepartmentParsed(d));
-        let promiseDataPoints = d3.csv(this.json_path, d => this.onDataPointParsed(d));
+        let promiseDataPoints = d3.csv(this.json_path, d => {
+            try {
+                let parsed_d = this.onDataPointParsed(d);
+                this.dataPoints.push(parsed_d);
+            } catch (e) {
+                console.debug(`Dropped ${d.name}: ${e.message}`);
+            }
+
+        });
 
         this.loadingPromise = new Promise((resolveLoadingPromise, reject) => {
             Promise.all([promiseDepartment, promiseDataPoints]).then(values => {
                 let departments = values[0];
-                let dataPoints = values[1];
 
                 for (let i = 0, len = departments.features.length; i < len; i++) {
                     //we sleep here to let the display update itself
                     sleep(50).then(() => {
-                        this.computeDepartmentDensity(departments.features[i], dataPoints);
+                        this.computeDepartmentDensity(departments.features[i], this.dataPoints);
                         this.loadedDepartments++;
                         _onLoadProgress();
                         //this.onEachDepartmentFeature(departments.features[i],departments.features[i])
@@ -204,14 +202,14 @@ class CustomDataLayer {
         let options = {
             locate: {
                 callback: () => {
-                    if(!marker.getPopup().isOpen()){
+                    if (!marker.getPopup().isOpen()) {
                         marker.openPopup();
                     }
                 }
             }
         };
         marker.on({
-            click: this.onDataPointClicked(dataPoint,options).bind(this),
+            click: this.onDataPointClicked(dataPoint, options).bind(this),
         });
         return marker;
     }
@@ -219,7 +217,7 @@ class CustomDataLayer {
     computeDepartmentDensity(department, dataPoints) {
         department.properties.density = 0;
         dataPoints.forEach(dataPoint => {
-            if (dataPoint.department_code === undefined){
+            if (dataPoint.department_code === undefined) {
                 let point = turf.point([dataPoint.long, dataPoint.lat]);
                 if (turf.inside(point, department)) {
                     department.properties.density++;
@@ -259,8 +257,8 @@ class CustomDataLayer {
                                     '#E1F5FE';
     }
 
-    getDepartmentOpacity(isSelected){
-        if(isSelected){
+    getDepartmentOpacity(isSelected) {
+        if (isSelected) {
             return 0;
         }
         let zoom = map.getZoom();
@@ -332,26 +330,32 @@ class CustomDataLayer {
             fillOpacity: 0,
         });
         map.once("moveend zoomend", () => {
-            sidebar.close("infoPane");
+            let clubs = getClubsInDepartment(layer.feature.properties.code,this.dataPoints);
+            const data = getNTopClubs(10,clubs);
+
+            stackChart.update(data, `Top ${data.length} Clubs: ${layer.feature.properties.nom}`)
+            sidebar.open("statsPane");
+            //sidebar.close("infoPane");
         });
     }
 
-    onDataPointClicked(dataPoint, options){
+    onDataPointClicked(dataPoint, options) {
         return (e) => {
             let title = this.getDataType();
             title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
             let html = `<b>Name:</b> ${dataPoint.name}(${dataPoint.short_name}) </br>`
                 + `<b>City:</b> ${dataPoint.city_name}`;
+            let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
             let paneOptions = {
                 title: title,
                 locate: {
                     latlng: e.latlng,
-                    zoom: map.getZoom(),
+                    zoom: zoom,
                     callback: options.locate.callback
                 }
-            }
-            sidebar.updatePaneHTML("infoPane", html,paneOptions);
-            sidebar.open("infoPane",e.latlng);
+            };
+            sidebar.updatePaneHTML("infoPane", html, paneOptions);
+            sidebar.open("infoPane", e.latlng, zoom);
         }
     }
 
@@ -384,7 +388,7 @@ class CustomDataLayer {
             : 'Hover over a department');
     }
 
-    updateLegendLabel(colorFct,colorGradesFct,opacityFct) {
+    updateLegendLabel(colorFct, colorGradesFct, opacityFct) {
         return function (props) {
             let colorGrades = colorGradesFct();
             let div = L.DomUtil.create('div', 'info legend');
@@ -394,7 +398,7 @@ class CustomDataLayer {
                 let colorStr = colorFct(colorGrades[i] + 1);
                 let opacityStr = opacityFct(false);
                 div.innerHTML +=
-                    `<i style="background: ${colorStr}; opacity: ${opacityStr}"></i>`  +
+                    `<i style="background: ${colorStr}; opacity: ${opacityStr}"></i>` +
                     colorGrades[i] + (colorGrades[i + 1] ? '&ndash;' + colorGrades[i + 1] + '<br>' : '+');
             }
             this._div.innerHTML = div.innerHTML;
@@ -423,11 +427,12 @@ class ClubsLayer extends CustomDataLayer {
         super("data/Club_geo.csv");
         this.sidebarPanelButton = {
             id: 'clubsPanel',                     // UID, used to access the panel
-            tab: '<i class="fa fa-home" style="color: black;"></i>',  // content can be passed as HTML string,
+            tab: '<i class="fas fa-school" style="color: black;"></i>',  // content can be passed as HTML string,
             //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
             title: 'Clubs',              // an optional pane header
             button: toggleLayerButton
         };
+        this.players = [];
     }
 
     getDataType() {
@@ -459,6 +464,76 @@ class ClubsLayer extends CustomDataLayer {
             '<b>' + props.nom + '</b><br />' + props.density + ' clubs</sup>'
             : 'Hover over a department');
     }
+
+    getClubs() {
+        return this.dataPoints;
+    }
+
+    getClub(id) {
+        for (let i = 0; i < this.dataPoints.length; i++) {
+            if(this.dataPoints[i].id === id){
+                return this.dataPoints[i];
+            }
+        }
+        return undefined;
+    }
+
+    onDataPointParsed(dataPoint) {
+        let club = new Club(dataPoint);
+        let marker = this.createMarker(club);
+        this.markerCluster.addLayer(marker);
+        club.marker = marker;
+        return club;
+    }
+
+    focusClub(club_id) {
+        let club;
+        for (let i = 0; i < this.dataPoints.length; i++) {
+            let point = this.dataPoints[i];
+            if (point.id === club_id) {
+                club = point;
+                break;
+            }
+        }
+
+        if (club !== undefined) {
+            let zoom = 11;
+            let options = {
+                locate: {
+                    callback: () => {
+                        if (!club.marker.getPopup().isOpen()) {
+                            club.marker.openPopup();
+                        }
+                    },
+                    zoom: zoom
+                }
+            };
+            this.onDataPointClicked(club, options).bind(this)({latlng: {lat: club.lat, lng: club.long}});
+            if (!club.marker.getPopup().isOpen()) {
+                club.marker.openPopup();
+            }
+        }
+    }
+    onDataPointClicked(dataPoint, options){
+        return (e) => {
+            let title = this.getDataType();
+            title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
+            let rawHtml = dataPoint.html;
+            rawHtml = rawHtml.replace(/(\r\n|\n|\r)/gm,"");
+            let html = /<div[^>]*>(.*)<\/div>/gm.exec(rawHtml);
+            let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
+            let paneOptions = {
+                title: title,
+                locate: {
+                    latlng: e.latlng,
+                    zoom: zoom,
+                    callback: options.locate.callback
+                }
+            };
+            sidebar.updatePaneHTML("infoPane", html[1],paneOptions);
+            sidebar.open("infoPane",e.latlng, zoom);
+        }
+    }
 }
 
 class TournamentsLayer extends CustomDataLayer {
@@ -466,7 +541,7 @@ class TournamentsLayer extends CustomDataLayer {
         super("data/Tournament.csv");
         this.sidebarPanelButton = {
             id: 'tournamentsPanel',                     // UID, used to access the panel
-            tab: '<i class="fa fa-trophy" style="color: black;"></i>',  // content can be passed as HTML string,
+            tab: '<i class="fas fa-trophy" style="color: black;"></i>',  // content can be passed as HTML string,
             //pane: someDomNode.innerHTML,        // DOM elements can be passed, too
             title: 'Tournaments',              // an optional pane header
             button: toggleLayerButton
@@ -501,6 +576,55 @@ class TournamentsLayer extends CustomDataLayer {
         this._div.innerHTML = '<h4>Tournaments density</h4>' + (props ?
             '<b>' + props.nom + '</b><br />' + props.density + ' tournaments</sup>'
             : 'Hover over a department');
+    }
+
+    onDataPointParsed(dataPoint) {
+        let tournament = new Tournament(dataPoint);
+        this.markerCluster.addLayer(this.createMarker(tournament));
+        return tournament;
+    }
+
+    onDataPointClicked(dataPoint, options){
+        return (e) => {
+            function getPrice() {
+              let prices = "";
+              if(dataPoint.price_1_tab != "") {
+                prices = prices + `Un tableau: ${dataPoint.price_1_tab}€ <br>`;
+              }
+              if(dataPoint.price_2_tabs != "") {
+                prices = prices + `Deux tableaux: ${dataPoint.price_2_tabs}€ <br>`;
+              }
+              if(dataPoint.price_3_tabs != "") {
+                prices = prices + `Trois tableaus: ${dataPoint.price_3_tabs}€ <br>`;
+              }
+              return prices;
+            }
+            let title = this.getDataType();
+            title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
+            let html = `<div style="padding: .5em; margin: 0 auto; width:45em; 
+            background-color: #FFFFFF">
+            <span style="font-size:2em; font-weight: bold; ">${dataPoint.name}</span>
+            <table class="formulaire" 
+            cellpadding="0" summary="description du tournoi"><tr>
+            <td class="formulaire1">Date</td><td class="forminfo">${dataPoint.start_date}</td></tr>
+            <tr>
+            <td class="formulaire1"><a href="http://badiste.fr/${dataPoint.url}">Lien du tournoi</td><td class="forminfo"></td></tr>
+            <tr>
+            <td class="formulaire1">Prix</td><td class="forminfo">${getPrice()}</td></tr>
+            <tr></table></div>`;
+            let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
+            let paneOptions = {
+                title: title,
+                locate: {
+                    latlng: e.latlng,
+                    zoom: zoom,
+                    callback: options.locate.callback
+                }
+            };
+            console.log(html)
+            sidebar.updatePaneHTML("infoPane", html,paneOptions);
+            sidebar.open("infoPane",e.latlng, zoom);
+        }
     }
 }
 

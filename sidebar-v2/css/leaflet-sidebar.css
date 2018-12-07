@@ -88,8 +88,8 @@
   top: 0;
   bottom: 0;
   background-color: rgba(255, 255, 255, 0.95);
-  overflow-x: hidden;
-  overflow-y: auto; }
+  overflow-x: unset;
+  overflow-y: unset; }
   .leaflet-sidebar-left .leaflet-sidebar-content {
     left: 40px;
     right: 0; }
@@ -127,9 +127,15 @@
   line-height: 40px;
   font-size: 14.4pt;
   color: #fff;
+  /*! overflow: hidden; */
+  /*! position:absolute; */
   background-color: #0074d9; }
   .leaflet-sidebar-right .leaflet-sidebar-header {
     padding-left: 40px; }
+
+.leaflet-sidebar-pane-content {
+  overflow: scroll;
+}
 
 .leaflet-sidebar-close {
   position: absolute;

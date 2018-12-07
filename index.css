@@ -31,7 +31,6 @@ html, body {
     height: 18px;
     float: left;
     margin-right: 8px;
-    opacity: 0.7;
 }
 
 .btn:hover {
@@ -118,4 +117,76 @@ html, body {
 
 .marker-cluster-large div {
     background-color: rgba(38, 50, 56, 0.7);
+}
+
+/*
+    DIVERGING STACKED CHART
+ */
+.axis {
+    pointer-events: none;
+}
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.axis.zero line {
+    stroke: #808080;
+    stroke-width: 1;
+}
+.axis.tick text {
+    color: black;
+}
+
+.legendbox {
+    height: 16px;
+    line-height: 16px;
+}
+.legendbox .legend {
+    position: relative;
+    display: inline-block;
+    padding-right: 16px;
+}
+.legendbox .legend .rect {
+    display: inline-block;
+    width: 32px;
+    height: 16px;
+    margin: 0; padding: 0;
+}
+.legendbox .legend .label {
+    display: inline-block;
+    transform: 			translateY(-20%);
+    font: "10px sans-serif";
+    margin-left: 8px;
+    position: relative;
+    color: black;
+}
+
+#stacked-chart-div {
+    margin: auto;
+    height: 850px;
+}
+
+div.tooltip {
+    font-size: 10px;
+    position: absolute;
+    padding: 6px;
+    background-color: #fff;
+    border: 1px solid #fff;
+    border-radius: 3px;
+    color: #222;
+    white-space: nowrap;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    z-index: 10000;
+}
+
+/* D3 Chart */
+.bar-chart-hover {
+    opacity: 0.5;
 }

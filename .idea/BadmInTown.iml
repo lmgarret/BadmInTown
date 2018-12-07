@@ -16,5 +16,6 @@
     <orderEntry type="library" name="pouchdb" level="application" />
     <orderEntry type="library" name="L.TileLayer.PouchDBCached" level="application" />
     <orderEntry type="library" name="leaflet-sidebar" level="application" />
+    <orderEntry type="library" name="d3.tip.v0.6.3" level="application" />
   </component>
 </module>

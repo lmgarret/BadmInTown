@@ -5,12 +5,16 @@ let map;
 let clubsLayer = new ClubsLayer();
 let tournamentsLayer = new TournamentsLayer();
 let activeLayer = undefined;
+let players = [];
 
 let franceLightLayer;
 
 let loadingBar;
 let sidebar;
+let statsSidebarPane;
 let infoSidebarPane;
+let stackChart;
+let topClubs;
 main();
 
 function main() {
@@ -19,10 +23,17 @@ function main() {
             activeLayer = clubsLayer;
             let promiseClubs = clubsLayer.loadDataPoints(map);
 
-            Promise.all([promiseClubs]).then(() => {
-                sidebar.addPanel(clubsLayer.getSideBarPanelButton());
+            Promise.all([promiseClubs, loadPlayers()]).then(() => {
+                //TODO see how to integrate this
+                //sidebar.addPanel(clubsLayer.getSideBarPanelButton());
                 clubsLayer.show();
                 sidebar.open("home");
+
+                console.log("Building stacked chart...");
+
+                stackChart = new DivergingStackChart();
+                topClubs = getNTopClubs(10, clubsLayer.getClubs(), "N");
+                stackChart.update(topClubs, "Top 10 Clubs: France");
             });
         });
 
@@ -48,7 +59,7 @@ function create_map() {
     return loadBaseLayers();
 }
 
-function createUI(){
+function createUI() {
 
     sidebar = L.control.sidebar({
         //autopan: true,       // whether to maintain the centered map point when opening the sidebar
@@ -64,6 +75,19 @@ function createUI(){
         title: 'Info',              // an optional pane header
     };
     sidebar.addPanel(infoSidebarPane);
+
+
+    statsSidebarPane = {
+        id: 'statsPane',                     // UID, used to access the panel
+        pane: "<div id= \"stacked-chart-div\">" +
+            "<div id= \"stacked-chart-title\" class='legend'></div>" +
+            "<svg id=\"figure\"></svg>" +       // DOM elements can be passed, too
+            "<div id= \"stacked-chart-legend\" class='legend'></div>" +
+            "</div>",
+        tab: '<i class="fa fa-chart-bar "></i>',  // content can be passed as HTML string,
+        title: 'Statistics',              // an optional pane header
+    };
+    sidebar.addPanel(statsSidebarPane);
 
     loadingBar = L.control.custom({
         position: 'bottomleft',
@@ -99,6 +123,7 @@ function createUI(){
                 click: function (data) {
                     switch (data.target.id) {
                         case "franceButton":
+                            stackChart.update(topClubs, "Top 10 Clubs: France");
                             map.setView(INITIAL_COORD, INITIAL_ZOOM);
                             activeLayer.deselectAllDepartments();
                             break;
@@ -124,7 +149,7 @@ function loadBaseLayers() {
         attribution: '©OpenStreetMap, ©CartoDB',
         useCache: true,
         crossOrigin: true,
-        cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
+        cacheMaxAge: 604800000, // 7 days, we don't need exact roads for this project
     }).addTo(map);
 
     return d3.json('geojson/france_shape_hd.geojson').then(geoJSON => {
@@ -133,7 +158,7 @@ function loadBaseLayers() {
             boundary: geoJSON,
             useCache: true,
             crossOrigin: true,
-            cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
+            cacheMaxAge: 604800000, // 7 days, we don't need exact roads for this project
         });
 
         map.createPane('labels');
@@ -141,27 +166,28 @@ function loadBaseLayers() {
             attribution: '©OpenStreetMap, ©CartoDB',
             useCache: true,
             crossOrigin: true,
-            cacheMaxAge:604800000, // 7 days, we don't need exact roads for this project
+            cacheMaxAge: 604800000, // 7 days, we don't need exact roads for this project
             pane: 'labels'
         }).addTo(map);
     });
 }
 
-function _onLoadStarted(){
+function _onLoadStarted() {
     franceLightLayer.remove();
     loadingBar.addTo(map);
 }
+
 function _onLoadProgress() {
     let percentage = activeLayer.getLoadingPercentage();
     percentage = Math.round(percentage);
     percentage = percentage > 100 ? 100 : percentage;
 
-    if( percentage % 10 === 0){
+    if (percentage % 10 === 0) {
         loadingBar.container.innerHTML = htmlLoadingBar(percentage);
         console.log(`Loaded: ${percentage}`);
     }
     loadingBar.container.innerHTML = htmlLoadingBar(percentage);
-    if(percentage === 100){
+    if (percentage === 100) {
         franceLightLayer.addTo(map);
         loadingBar.remove();
     }
@@ -179,18 +205,18 @@ function htmlLoadingBar(percentage) {
 
 }
 
-function sleep (time) {
+function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
-function toggleLayerButton(event){
+function toggleLayerButton(event) {
     sidebar.close();
     let title = "Info";
     let html = "Click on a data point to get more info about it.";
     let paneOptions = {
         title: title,
-    }
-    sidebar.updatePaneHTML("infoPane", html,paneOptions);
+    };
+    sidebar.updatePaneHTML("infoPane", html, paneOptions);
 
     if (clubsLayer.visible) {
         setActiveLayer(tournamentsLayer, [clubsLayer]);
@@ -208,16 +234,34 @@ function toggleLayerButton(event){
     }
 }
 
-function setActiveLayer(layer, otherLayers = []){
+function setActiveLayer(layer, otherLayers = []) {
     activeLayer = layer;
 
-    for(let i = 0; i<otherLayers.length; i++) {
+    for (let i = 0; i < otherLayers.length; i++) {
         otherLayers[i].hide();
     }
 
-    if(activeLayer.loadingPromise === undefined){
+    if (activeLayer.loadingPromise === undefined) {
         activeLayer.loadDataPoints(map);
     }
 
     activeLayer.show();
+}
+
+function loadPlayers() {
+    console.log("Loading players...");
+    return d3.csv("data/Player.csv", d => {
+        try {
+            let player = new Player(d);
+            player.club = clubsLayer.getClub(player.club_id);
+            if (player.club !== undefined) {
+                player.club.addPlayer(player);
+            }
+            players.push(player);
+            return player;
+        } catch (e) {
+            console.log(`Dropped ${d.name}: ${e.message}`);
+            return undefined;
+        }
+    });
 }

@@ -202,7 +202,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      * @param {string} id - The ID of the tab to show (without the # character)
      * @returns {L.Control.Sidebar}
      */
-    open: function(id, target) {
+    open: function(id, target, zoom) {
         var i, child, tab;
 
         // If panel is disabled, stop right here
@@ -237,16 +237,16 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
 
             if (this.options.autopan){
                 if (target){
-                    this.moveViewTo(target,"open");
+                    this.moveViewTo(target,"open",zoom);
                 }else{
                     this._panMap('open');
                 }
             } else if (target){
-                this.moveViewTo(target,"open");
+                this.moveViewTo(target,"open",zoom);
             }
         } else {
             if (target){
-                this.moveViewTo(target,"open");
+                this.moveViewTo(target,"open",zoom);
             }
         }
 
@@ -333,10 +333,10 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
                 if (data.title)
                     content += '<h1 class="leaflet-sidebar-header">' + data.title;
                 if (this.options.closeButton)
-                    content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>';
+                    content += '<span class="leaflet-sidebar-close"><i class="fas fa-caret-left"></i></span>';
                 if (data.title)
                     content += '</h1>';
-                pane.innerHTML = content + "<br>"+ data.pane;
+                pane.innerHTML = content + "<br>"+ "<div class=\"leaflet-sidebar-pane-content\">" + data.pane + "</div>";
             } else {
                 // pane is given as DOM object
                 pane = data.pane;
@@ -578,13 +578,13 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
             content += '<h1 class="leaflet-sidebar-header">' + tab.title;
         }
         if(options.locate && options.locate.latlng){
-            content += '<span class="leaflet-sidebar-locate"><i class="fa fa-location-arrow "></i></span>';
+            content += '<span class="leaflet-sidebar-locate"><i class="fas fa-location-arrow "></i></span>';
         }
         if (hasCloseButton)
-            content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>';
+            content += '<span class="leaflet-sidebar-close"><i class="fas fa-caret-left"></i></span>';
         if (options.title || tab.title)
             content += '</h1>';
-        pane.innerHTML = content + "<br>"+ innerHTML;
+        pane.innerHTML = content + "<br>"+ "<div class=\"leaflet-sidebar-pane-content\">" + innerHTML + "</div>";
 
 
         // Save references to close button & register click listener
