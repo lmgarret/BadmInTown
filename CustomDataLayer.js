@@ -39,7 +39,7 @@ class CustomDataLayer {
         };
         this.infoLabel.update = this.updateInfoLabel;
 
-        this.legendLabel = L.control({position: 'bottomright'});
+        this.legendLabel = L.control({position: 'topright'});
         this.legendLabel.onAdd = function (map) {
             this._div = L.DomUtil.create('div', 'info legend');
             this.update();

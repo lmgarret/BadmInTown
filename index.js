@@ -46,6 +46,7 @@ function create_map() {
         maxZoom: 13,
     }).setView(INITIAL_COORD, INITIAL_ZOOM);
     map._layersMaxZoom = 13;
+    map.zoomControl.setPosition('bottomright');
 
     //added function to setView with an offset in pixels after zooming
     L.Map.prototype.setViewOffset = function (latlng, offset, targetZoom) {
@@ -107,7 +108,7 @@ function createUI() {
 
     let buttons;
     buttons = L.control.custom({
-        position: 'topleft',
+        position: 'bottomright',
         content: htmlFranceButton,
         classes: 'btn-group-vertical',
         style:
