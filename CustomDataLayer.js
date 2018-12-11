@@ -24,7 +24,6 @@ class CustomDataLayer {
         this.loadedDepartments = 0;
         this.totalDepartments = 101;
 
-        this.infoLabel = L.control();
         this.sidebarPanelButton = {
             id: 'dataPanel',                     // UID, used to access the panel
             tab: '<i class="fa fa-question" style="color: black;"></i>',  // content can be passed as HTML string,
@@ -32,12 +31,6 @@ class CustomDataLayer {
             title: 'Data',              // an optional pane header
             button: toggleLayerButton
         };
-        this.infoLabel.onAdd = function (map) {
-            this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-            this.update();
-            return this._div;
-        };
-        this.infoLabel.update = this.updateInfoLabel;
 
         this.legendLabel = L.control({position: 'topright'});
         this.legendLabel.onAdd = function (map) {
@@ -135,7 +128,6 @@ class CustomDataLayer {
 
             this.department_layer.addTo(map);
             this.markerCluster.addTo(map);
-            this.infoLabel.addTo(map);
             this.legendLabel.addTo(map);
 
             map.removeLayer(this.markerCluster);
@@ -157,7 +149,6 @@ class CustomDataLayer {
             } else {
                 map.removeLayer(this.markerCluster);
             }
-            map.addControl(this.infoLabel);
             map.addControl(this.legendLabel);
         });
     }
@@ -169,7 +160,6 @@ class CustomDataLayer {
 
             map.removeLayer(this.department_layer);
             map.removeLayer(this.markerCluster);
-            map.removeControl(this.infoLabel);
             map.removeControl(this.legendLabel);
         });
     }
@@ -306,8 +296,6 @@ class CustomDataLayer {
             dashArray: '',
             fillOpacity: 0,
         });
-
-        this.infoLabel.update(layer.feature.properties);
     }
 
     onMouseOutDepartment(e) {
@@ -319,7 +307,6 @@ class CustomDataLayer {
         if (!turf.inside(point, polygon) && !layer.feature.properties.isSelected) {
             this.department_layer.resetStyle(e.target);
         }
-        this.infoLabel.update();
     }
 
     onClickDepartment(e) {
@@ -391,17 +378,11 @@ class CustomDataLayer {
         return "dataPoint";
     }
 
-
-    updateInfoLabel(props) {
-        this._div.innerHTML = '<h4>DataPoints density</h4>' + (props ?
-            '<b>' + props.nom + '</b><br />' + props.density + ' datapoints</sup>'
-            : 'Hover over a department');
-    }
-
     updateLegendLabel(colorFct, colorGradesFct, opacityFct) {
         return function (props) {
             let colorGrades = colorGradesFct();
             let div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML += `<h4>Datapoint density</h4>`;
 
             // loop through our density intervals and generate a label with a colored square for each interval
             for (let i = 0; i < colorGrades.length; i++) {
@@ -469,10 +450,22 @@ class ClubsLayer extends CustomDataLayer {
         return "#0D47A1"
     }
 
-    updateInfoLabel(props) {
-        this._div.innerHTML = '<h4>Clubs density</h4>' + (props ?
-            '<b>' + props.nom + '</b><br />' + props.density + ' clubs</sup>'
-            : 'Hover over a department');
+    updateLegendLabel(colorFct, colorGradesFct, opacityFct) {
+        return function (props) {
+            let colorGrades = colorGradesFct();
+            let div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML += `<h4>Clubs density</h4>`;
+
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (let i = 0; i < colorGrades.length; i++) {
+                let colorStr = colorFct(colorGrades[i] + 1);
+                let opacityStr = opacityFct(false);
+                div.innerHTML +=
+                    `<i style="background: ${colorStr}; opacity: ${opacityStr}"></i>` +
+                    colorGrades[i] + (colorGrades[i + 1] ? '&ndash;' + colorGrades[i + 1] + '<br>' : '+');
+            }
+            this._div.innerHTML = div.innerHTML;
+        };
     }
 
     getClubs() {
@@ -582,11 +575,6 @@ class TournamentsLayer extends CustomDataLayer {
         return '#E65100'
     }
 
-    updateInfoLabel(props) {
-        this._div.innerHTML = '<h4>Tournaments density</h4>' + (props ?
-            '<b>' + props.nom + '</b><br />' + props.density + ' tournaments</sup>'
-            : 'Hover over a department');
-    }
 
     onDataPointParsed(dataPoint) {
         let tournament = new Tournament(dataPoint);
