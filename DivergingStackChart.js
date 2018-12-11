@@ -193,6 +193,9 @@ class DivergingStackChart{
                 div.html(`${Math.abs(d[1] - d[0])} ${getRankFromRange(d,d.data)}`)
                     .style('left', d3.event.pageX + 'px')
                     .style('top', d3.event.pageY - 28 + 'px');
+                let club = clubsLayer.getClub(this.__data__.data.id);
+                clubsLayer.onMouseOverDepartment({target : clubsLayer._getDepartmentLayer(club.department)});
+
             })
             .on('mouseout', function() {
                 d3.select(this).classed("bar-chart-hover", false);

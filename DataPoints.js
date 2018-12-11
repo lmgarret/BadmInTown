@@ -161,7 +161,7 @@ function getNTopClubs(n, clubs) {
 function getClubsInDepartment(department_code, clubs) {
     let result = [];
     for (let i = 0; i < clubs.length; i++) {
-        if (clubs[i].department_code === department_code) {
+        if (clubs[i].department !== undefined && clubs[i].department.properties.code === department_code) {
             result.push(clubs[i]);
         }
     }

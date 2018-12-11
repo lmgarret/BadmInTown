@@ -119,6 +119,16 @@ class CustomDataLayer {
         return this.loadingPromise;
     }
 
+    _getDepartmentLayer(department){
+        let layer = undefined;
+        this.department_layer.eachLayer(l => {
+            if (l.feature.properties.code === department.properties.code) {
+                layer = l;
+            }
+        });
+        return layer;
+    }
+
     show() {
         this.loadingPromise.then(() => {
             this.visible = true;
@@ -217,11 +227,11 @@ class CustomDataLayer {
     computeDepartmentDensity(department, dataPoints) {
         department.properties.density = 0;
         dataPoints.forEach(dataPoint => {
-            if (dataPoint.department_code === undefined) {
+            if (dataPoint.department === undefined) {
                 let point = turf.point([dataPoint.long, dataPoint.lat]);
                 if (turf.inside(point, department)) {
                     department.properties.density++;
-                    dataPoint.department_code = department.properties.code;
+                    dataPoint.department = department;
                 }
             }
         });
