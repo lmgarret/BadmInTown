@@ -76,13 +76,7 @@ class Club extends GraphicalDataPoint {
 
     updateRankCount(player, ranks, callback) {
         let count = 0;
-        if (ranks.includes(player.rank_solo)) {
-            count++;
-        }
-        if (ranks.includes(player.rank_double)) {
-            count++;
-        }
-        if (ranks.includes(player.rank_mixte)) {
+        if (ranks.includes(player.rank_solo) || ranks.includes(player.rank_double) || ranks.includes(player.rank_mixte)) {
             count++;
         }
 
