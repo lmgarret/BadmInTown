@@ -520,7 +520,14 @@ class ClubsLayer extends CustomDataLayer {
             title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
             let rawHtml = dataPoint.html;
             rawHtml = rawHtml.replace(/(\r\n|\n|\r)/gm,"");
-            let html = /<div[^>]*>(.*)<\/div>/gm.exec(rawHtml);
+            let htmlNoLogo = /<div[^>]*>(.*)<\/div>/gm.exec(rawHtml);
+            let html = htmlNoLogo[1]
+            let logoLink = /.*src="([^"]*)".*/gm.exec(html);
+            
+            
+            if(logoLink[1].startsWith("../")){
+              html = html.replace(/..\/img\/3\/logo_club.jpg/gm, "img/logo_club.jpg")
+            }
             let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
             let paneOptions = {
                 title: title,
@@ -530,7 +537,7 @@ class ClubsLayer extends CustomDataLayer {
                     callback: options.locate.callback
                 }
             };
-            sidebar.updatePaneHTML("infoPane", html[1],paneOptions);
+            sidebar.updatePaneHTML("infoPane", html,paneOptions);
             sidebar.open("infoPane",e.latlng, zoom);
         }
     }
