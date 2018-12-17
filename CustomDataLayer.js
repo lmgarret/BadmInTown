@@ -548,6 +548,37 @@ class ClubsLayer extends CustomDataLayer {
       }
     }
     
+    _getImage(genre){
+      if(genre == 0){
+        return "img/logo_boy.png";
+      } else {
+        return "img/logo_girl.png"
+      }
+    }
+    
+    _generateOne(player, paneOptions){
+      let html = `
+      <div>
+      <div style="float: right; text-align:right;">
+      <img src="${this._getImage(player.gender)}">
+      </div>
+      
+      <h1 style="size:200px;">${player.name} ${player.surname}</h1>
+      
+      <h3 style="size:200px;"> license number: ${player.license}</h3>
+      
+      Points average: ${player.rank_avg} 
+      </div>
+      
+      <div class="radarChart"></div>` 
+      
+      
+      sidebar.updatePaneHTML("infoPane", html, paneOptions);
+      createPlot(player, 300) //TODO: change to get the right size
+      return html
+		
+    }
+    
     _generatePlayersHtml(dataPoint){
       let players = dataPoint.players.sort(this._compare);
       let html = `<div>
@@ -619,8 +650,7 @@ class ClubsLayer extends CustomDataLayer {
         return (e) => {
             let title = this.getDataType();
             title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
-            let html = this._generateClubHtml(dataPoint);
-            console.log(html)
+            
             let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
             let paneOptions = {
                 title: title,
@@ -630,7 +660,8 @@ class ClubsLayer extends CustomDataLayer {
                     callback: options.locate.callback
                 }
             };
-            sidebar.updatePaneHTML("infoPane", html, paneOptions);
+            let html = this._generateOne(dataPoint.players.sort(this._compare)[0], paneOptions)//this._generateClubHtml(dataPoint);
+            //sidebar.updatePaneHTML("infoPane", html, paneOptions);
             sidebar.open("infoPane",e.latlng, zoom);
         }
     }
