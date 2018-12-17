@@ -221,7 +221,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 		 .enter()
 		.append("circle")
 		.attr("class", "gridCircle")
-		.attr("r", function(d, i){return radius/cfg.levels*d + 5;})
+		.attr("r", function(d, i){return radius/cfg.levels*d + 6;})
 		.style("fill", function(d, i){return getColor(d);})//function(d, i){return getColor(d);})
 		.style("stroke", function(d, i){return getStrokeColor(d);})
 		.style("fillOpacity", 0.5)
@@ -242,7 +242,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 	}
 	function getY(category){
 		if(category == 0){
-			return -4 - sdm[0]*radius/cfg.levels;			
+			return  4 - sdm[0]*radius/cfg.levels;			
 		} else if(category == 1){
 			return 4 - sin( -1 * PI / 6) * sdm[1]*radius/cfg.levels;
 		} else {
@@ -257,8 +257,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 	   .enter().append("text")
 	   .attr("class", "axisLabel")
 	   .attr("x", 4)
-	   .attr("y", function(d){return -4 - d*radius/cfg.levels;})
-	   .attr("dy", "0.4em")
+	   .attr("y", function(d){return 4 - d*radius/cfg.levels;})
 	   .style("font-size", "10px")
 	   .attr("fill", "#777777")
 	   .text(function(d,i) { return getLevel(d); });
@@ -333,7 +332,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 		.attr("d", d => radarLine(d.axes))
 		.style("fill", (d,i) => cfg.color(i))
 		.style("fill-opacity", cfg.opacityArea)
-		.on('mouseover', function(d, i) {
+		/*.on('mouseover', function(d, i) {
 			//Dim all blobs
 			parent.selectAll(".radarArea")
 				.transition().duration(200)
@@ -348,7 +347,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 			parent.selectAll(".radarArea")
 				.transition().duration(200)
 				.style("fill-opacity", cfg.opacityArea);
-		});
+		})*/;
 
 	//Create the outlines
 	blobWrapper.append("path")

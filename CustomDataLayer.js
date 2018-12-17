@@ -557,7 +557,10 @@ class ClubsLayer extends CustomDataLayer {
     }
     
     _generateOne(player, paneOptions){
+      let club = this.getClub(player.club_id);
+      
       let html = `
+      <div class="clickable" id="backButton"> < back to club ${club.name}</div>
       <div>
       <div style="float: right; text-align:right;">
       <img src="${this._getImage(player.gender)}">
@@ -574,12 +577,16 @@ class ClubsLayer extends CustomDataLayer {
       
       
       sidebar.updatePaneHTML("infoPane", html, paneOptions);
-      createPlot(player, 300) //TODO: change to get the right size
+      createPlot(player, 300)
+      document.getElementById('backButton').onclick =  () => {
+          this._generateClub(club, paneOptions)
+          return false;
+        };
       return html
 		
     }
     
-    _generatePlayersHtml(dataPoint){
+    _generatePlayersHtml(dataPoint, paneOptions){
       let players = dataPoint.players.sort(this._compare);
       let html = `<div>
         <table>
@@ -610,17 +617,17 @@ class ClubsLayer extends CustomDataLayer {
         for (let index = 0; index < players.length; index++) {
           const p = players[index];
           let gender = 'M';
-          if(p.gender){
+          if(parseInt(p.gender)){
             gender = 'F'
           }
           html += `</tr><tr>
-          <td><a>${p.name + " " + p.surname.toUpperCase()}</a></td>
+          <td><a id="player${p.license}">${p.name + " " + p.surname.toUpperCase()}</a></td>
           <td align="center">${gender}</td>
           <td bgcolor="${this._getColor(p.rank_solo)}" align="center">${p.rank_solo}</td>
           <td bgcolor="${this._getColor(p.rank_double)}" align="center">${p.rank_double}</td>
           <td bgcolor="${this._getColor(p.rank_mixte)}" align="center">${p.rank_mixte}</td>
           <td align="right">${p.rank_avg}</td>
-          </tr>`
+          </tr>`    
         }
         
         html += `</tbody></table>
@@ -632,7 +639,7 @@ class ClubsLayer extends CustomDataLayer {
       
     }
     
-    _generateClubHtml(dataPoint){
+    _generateClubHtml(dataPoint, paneOptions){
       let rawHtml = dataPoint.html;
       rawHtml = rawHtml.replace(/(\r\n|\n|\r)/gm,"");
       let htmlNoLogo = /<div[^>]*>(.*)<\/div>/gm.exec(rawHtml);
@@ -643,7 +650,20 @@ class ClubsLayer extends CustomDataLayer {
       if(logoLink[1].startsWith("../")){
         html = html.replace(/..\/img\/3\/logo_club.jpg/gm, "img/logo_club.jpg")
       }
-      return html + this._generatePlayersHtml(dataPoint);
+      return html + this._generatePlayersHtml(dataPoint, paneOptions);
+    }
+    
+    _generateClub(dataPoint, paneOptions){
+      let html = this._generateClubHtml(dataPoint, paneOptions);
+      sidebar.updatePaneHTML("infoPane", html, paneOptions);
+      let players = dataPoint.players;
+      for(let i = 0; i < players.length; ++i){
+        let p = players[i];
+        document.getElementById('player' + p.license.toString()).onclick =  () => {
+            this._generateOne(p, paneOptions)
+            return false;
+          };
+      }    
     }
     
     onDataPointClicked(dataPoint, options){
@@ -660,7 +680,7 @@ class ClubsLayer extends CustomDataLayer {
                     callback: options.locate.callback
                 }
             };
-            let html = this._generateOne(dataPoint.players.sort(this._compare)[0], paneOptions)//this._generateClubHtml(dataPoint);
+            let html = this._generateClub(dataPoint, paneOptions)
             //sidebar.updatePaneHTML("infoPane", html, paneOptions);
             sidebar.open("infoPane",e.latlng, zoom);
         }

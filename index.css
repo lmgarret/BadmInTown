@@ -196,3 +196,13 @@ th {
     text-align: center;
 
 }
+
+.clickable {
+  color: #0078A8;
+  text-decoration: none;
+}
+
+.clickable:hover {
+  color: #337ab7;
+  text-decoration: underline;
+}
