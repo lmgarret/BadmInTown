@@ -190,3 +190,9 @@ div.tooltip {
 .bar-chart-hover {
     opacity: 0.5;
 }
+
+th {
+
+    text-align: center;
+
+}

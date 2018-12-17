@@ -514,20 +514,113 @@ class ClubsLayer extends CustomDataLayer {
             }
         }
     }
+    
+    _compare(a,b) {
+      if (a.rank_avg < b.rank_avg){
+        return 1;
+      } else if (a.rank_avg > b.rank_avg){
+        return -1;
+      } else{
+        return 0;
+      }
+      
+    }
+    
+    _getColor(rank) {
+      let colors = [
+          "#BF360C",
+          "#EF6C00",
+          "#FFB300",
+          "#FFEE58",
+          "#FFF9C4",
+      ];
+      
+      if(rank === "N1" || rank === "N2" || rank === "N3"){
+        return colors[0];
+      } else if(rank === "R4" || rank === "R5" || rank === "R6"){
+        return colors[1];
+      } else if(rank === "D7" || rank === "D8" || rank === "D9"){
+        return colors[2];
+      } else if(rank === "P10" || rank === "P11" || rank === "P12"){
+        return colors[3];
+      } else {
+        return colors[4];
+      }
+    }
+    
+    _generatePlayersHtml(dataPoint){
+      let players = dataPoint.players.sort(this._compare);
+      let html = `<div>
+        <table>
+          <tbody><tr><td><h3>
+            <a></a>Les joueurs en 2018-2019
+          </h3></td></tr>
+          <tr><td><br>
+          <table><tbody><tr>
+          <th>
+            <a> Nom Prénom </a>
+          </th>
+          <th>
+            <a> Genre </a>
+          </th>
+          <th>
+            <a > S </a>
+          </th>
+          <th>
+            <a> D </a>
+          </th>
+          <th>
+            <a> M </a>
+          </th>
+          <th>
+            <a> Moy </a>
+          </th>`;
+          
+        for (let index = 0; index < players.length; index++) {
+          const p = players[index];
+          let gender = 'M';
+          if(p.gender){
+            gender = 'F'
+          }
+          html += `</tr><tr>
+          <td><a>${p.name + " " + p.surname.toUpperCase()}</a></td>
+          <td align="center">${gender}</td>
+          <td bgcolor="${this._getColor(p.rank_solo)}" align="center">${p.rank_solo}</td>
+          <td bgcolor="${this._getColor(p.rank_double)}" align="center">${p.rank_double}</td>
+          <td bgcolor="${this._getColor(p.rank_mixte)}" align="center">${p.rank_mixte}</td>
+          <td align="right">${p.rank_avg}</td>
+          </tr>`
+        }
+        
+        html += `</tbody></table>
+        </td></tr></tbody></table>
+        </div>`
+        
+        return html;
+
+      
+    }
+    
+    _generateClubHtml(dataPoint){
+      let rawHtml = dataPoint.html;
+      rawHtml = rawHtml.replace(/(\r\n|\n|\r)/gm,"");
+      let htmlNoLogo = /<div[^>]*>(.*)<\/div>/gm.exec(rawHtml);
+      let html = htmlNoLogo[1];
+      let logoLink = /.*src="([^"]*)".*/gm.exec(html);
+      
+      
+      if(logoLink[1].startsWith("../")){
+        html = html.replace(/..\/img\/3\/logo_club.jpg/gm, "img/logo_club.jpg")
+      }
+      return html + this._generatePlayersHtml(dataPoint);
+    }
+    
     onDataPointClicked(dataPoint, options){
         return (e) => {
             let title = this.getDataType();
             title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
-            let rawHtml = dataPoint.html;
-            rawHtml = rawHtml.replace(/(\r\n|\n|\r)/gm,"");
-            let htmlNoLogo = /<div[^>]*>(.*)<\/div>/gm.exec(rawHtml);
-            let html = htmlNoLogo[1]
-            let logoLink = /.*src="([^"]*)".*/gm.exec(html);
-            
-            
-            if(logoLink[1].startsWith("../")){
-              html = html.replace(/..\/img\/3\/logo_club.jpg/gm, "img/logo_club.jpg")
-            }
+            let html = this._generateClubHtml(dataPoint);
+            console.log(html)
             let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
             let paneOptions = {
                 title: title,
@@ -537,7 +630,7 @@ class ClubsLayer extends CustomDataLayer {
                     callback: options.locate.callback
                 }
             };
-            sidebar.updatePaneHTML("infoPane", html,paneOptions);
+            sidebar.updatePaneHTML("infoPane", html, paneOptions);
             sidebar.open("infoPane",e.latlng, zoom);
         }
     }
