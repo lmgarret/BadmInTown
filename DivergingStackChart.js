@@ -2,7 +2,7 @@
 class DivergingStackChart{
     constructor(){
         this.margin = {top: 25, right: 20, bottom: 10, left: 10};
-        this.width = 390 - this.margin.left - this.margin.right;
+        this.width = 370 - this.margin.left - this.margin.right;
         this.height = 400 - this.margin.top - this.margin.bottom;
 
         this.keyLegendMapping = [
@@ -194,7 +194,13 @@ class DivergingStackChart{
                     .style('left', d3.event.pageX + 'px')
                     .style('top', d3.event.pageY - 28 + 'px');
                 let club = clubsLayer.getClub(this.__data__.data.id);
-                clubsLayer.onMouseOverDepartment({target : clubsLayer._getDepartmentLayer(club.department)});
+
+                if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM){
+                    sidebar.moveViewTo({lat: club.lat, lng: club.long}, "open", map.getZoom());
+                    club.marker.openPopup();
+                } else {
+                    clubsLayer.onMouseOverDepartment({target : clubsLayer._getDepartmentLayer(club.department)});
+                }
 
             })
             .on('mouseout', function() {

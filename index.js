@@ -13,6 +13,7 @@ let loadingBar;
 let sidebar;
 let statsSidebarPane;
 let infoSidebarPane;
+let searchSidebarPane;
 let stackChart;
 let topClubs;
 main();
@@ -79,6 +80,21 @@ function createUI() {
         position: 'left',     // left or right
     }).addTo(map);
 
+    searchSidebarPane = {
+        id: 'searchPane',                     // UID, used to access the panel
+        tab: '<i class="fa fa-search"></i>',  // content can be passed as HTML string,
+        pane: "<div class=\"search_bar\">\n" +
+            "  <div class=\"search-container\">\n" +
+            "      <input type=\"text\" placeholder=\"Search a club, a player...\" name=\"search\" onkeyup=\"onSearchSubmit(this)\">\n" +
+            "  </div>\n" +
+            "  <div id=\"search-results-holder\">\n" +
+            "Type in the name of a club or a player and we'll find it for you!" +
+            "  </div>\n" +
+            "</div>",              // an optional pane header
+        title: 'Search',              // an optional pane header
+    };
+    sidebar.addPanel(searchSidebarPane);
+
     infoSidebarPane = {
         id: 'infoPane',                     // UID, used to access the panel
         tab: '<i class="fa fa-info"></i>',  // content can be passed as HTML string,
@@ -86,7 +102,6 @@ function createUI() {
         title: 'Info',              // an optional pane header
     };
     sidebar.addPanel(infoSidebarPane);
-
 
     statsSidebarPane = {
         id: 'statsPane',                     // UID, used to access the panel
@@ -275,4 +290,47 @@ function loadPlayers() {
             return undefined;
         }
     });
+}
+
+function onSearchSubmit(form){
+    let search_str = form.value.toLowerCase();
+
+    if(search_str === ""){
+        let innerHTML = "Type in the name of a club or a player and we'll find it for you!";
+        document.getElementById("search-results-holder").innerHTML = innerHTML;
+
+    } else if (search_str.length < 2){
+        let innerHTML = "Type in at least 2 letters...";
+        document.getElementById("search-results-holder").innerHTML = innerHTML;
+
+    } else {
+        let result_html = "<ul id=\"search-results-ul\">\n";
+
+        let result_lines = "";
+
+        let clubs = clubsLayer.getClubs();
+        for (let i = 0; i < clubs.length; i++) {
+            let club = clubs[i];
+            if (club.name.toLowerCase().includes(search_str) || club.short_name.toLowerCase().includes(search_str)){
+                result_lines += `<li onclick="clubsLayer.focusClub(${club.id})"><i class="fas fa-location-arrow"></i></i><a href=\"#\">(${club.short_name}) ${club.name}</a></li>`;
+            }
+        }
+
+        for (let i = 0; i < players.length; i++) {
+            let p = players[i];
+            if (p.name.toLowerCase().includes(search_str)
+                || p.surname.toLowerCase().includes(search_str)
+                || (p.name.toLowerCase() + " " + p.surname.toLowerCase()).includes(search_str)){
+                result_lines += `<li onclick="clubsLayer._openPlayerPane(${p.license})"><i class="fas fa-user"></i><a href=\"#\">${p.name} ${p.surname.toUpperCase()}</a></li>`;
+            }
+        }
+
+        if (result_lines === ""){
+            result_lines = "No result for " + search_str + ".";
+        }
+
+        result_html += result_lines + "</ul>";
+
+        document.getElementById("search-results-holder").innerHTML = result_html;
+    }
 }
