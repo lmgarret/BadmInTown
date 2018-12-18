@@ -517,18 +517,27 @@ class ClubsLayer extends CustomDataLayer {
             }
         }
     }
-    
-    _compare(a,b) {
-      if (a.rank_avg < b.rank_avg){
-        return 1;
-      } else if (a.rank_avg > b.rank_avg){
-        return -1;
-      } else{
-        return 0;
-      }
-      
+
+    _comparePlayersOn(field , ascending = 1){
+        return (a,b) => {
+            let aVal =  a[field];
+            let bVal = b[field];
+
+            if(field !== "rank_avg" && field.includes("rank_")){
+                aVal = getNumber(aVal);
+                bVal = getNumber(bVal);
+            }
+
+            if (aVal < bVal){
+                return 1 * ascending;
+            } else if (aVal> bVal){
+                return -1 * ascending;
+            } else{
+                return 0;
+            }
+        };
     }
-    
+
     _getColor(rank) {
       let colors = [
           "#BF360C",
@@ -537,7 +546,7 @@ class ClubsLayer extends CustomDataLayer {
           "#FFEE58",
           "#FFF9C4",
       ];
-      
+
       if(rank === "N1" || rank === "N2" || rank === "N3"){
         return colors[0];
       } else if(rank === "R4" || rank === "R5" || rank === "R6"){
@@ -550,7 +559,7 @@ class ClubsLayer extends CustomDataLayer {
         return colors[4];
       }
     }
-    
+
     _getImage(genre){
       if(genre == 0){
         return "img/logo_boy.png";
@@ -558,10 +567,10 @@ class ClubsLayer extends CustomDataLayer {
         return "img/logo_girl.png"
       }
     }
-    
+
     _generateOne(player, paneOptions){
       let club = this.getClub(player.club_id);
-      
+
       let html = `
       <div class="clickable" id="backButton"> < back to club ${club.name}</div>
       <div>
@@ -576,9 +585,9 @@ class ClubsLayer extends CustomDataLayer {
       Points average: ${player.rank_avg} 
       </div>
       
-      <div class="radarChart"></div>` 
-      
-      
+      <div class="radarChart"></div>`
+
+
       sidebar.updatePaneHTML("infoPane", html, paneOptions);
       createPlot(player, 300)
       document.getElementById('backButton').onclick =  () => {
@@ -586,11 +595,13 @@ class ClubsLayer extends CustomDataLayer {
           return false;
         };
       return html
-		
+
     }
-    
+
     _generatePlayersHtml(dataPoint, paneOptions){
-      let players = dataPoint.players.sort(this._compare);
+        let searchMethod = paneOptions.comparePlayers !== undefined ? paneOptions.comparePlayers : this._comparePlayersOn("rank_avg");
+
+            let players = dataPoint.players.sort(searchMethod);
       let html = `<div>
         <table>
           <tbody><tr><td><h3>
@@ -599,24 +610,24 @@ class ClubsLayer extends CustomDataLayer {
           <tr><td><br>
           <table><tbody><tr>
           <th>
-            <a> Nom Prénom </a>
+            <a id="table_h_players_Name"> Nom Prénom </a>
           </th>
           <th>
-            <a> Genre </a>
+            <a id="table_h_players_Genre"> Genre </a>
           </th>
           <th>
-            <a > S </a>
+            <a id="table_h_players_S"> S </a>
           </th>
           <th>
-            <a> D </a>
+            <a id="table_h_players_D"> D </a>
           </th>
           <th>
-            <a> M </a>
+            <a id="table_h_players_M"> M </a>
           </th>
           <th>
-            <a> Moy </a>
+            <a id="table_h_players_Moy"> Moy </a>
           </th>`;
-          
+
         for (let index = 0; index < players.length; index++) {
           const p = players[index];
           let gender = 'M';
@@ -630,32 +641,32 @@ class ClubsLayer extends CustomDataLayer {
           <td bgcolor="${this._getColor(p.rank_double)}" align="center">${p.rank_double}</td>
           <td bgcolor="${this._getColor(p.rank_mixte)}" align="center">${p.rank_mixte}</td>
           <td align="right">${p.rank_avg}</td>
-          </tr>`    
+          </tr>`
         }
-        
+
         html += `</tbody></table>
         </td></tr></tbody></table>
         </div>`
-        
+
         return html;
 
-      
+
     }
-    
+
     _generateClubHtml(dataPoint, paneOptions){
       let rawHtml = dataPoint.html;
       rawHtml = rawHtml.replace(/(\r\n|\n|\r)/gm,"");
       let htmlNoLogo = /<div[^>]*>(.*)<\/div>/gm.exec(rawHtml);
       let html = htmlNoLogo[1];
       let logoLink = /.*src="([^"]*)".*/gm.exec(html);
-      
-      
+
+
       if(logoLink[1].startsWith("../")){
         html = html.replace(/..\/img\/3\/logo_club.jpg/gm, "img/logo_club.jpg")
       }
       return html + this._generatePlayersHtml(dataPoint, paneOptions);
     }
-    
+
     _generateClub(dataPoint, paneOptions){
       let html = this._generateClubHtml(dataPoint, paneOptions);
       sidebar.updatePaneHTML("infoPane", html, paneOptions);
@@ -663,17 +674,95 @@ class ClubsLayer extends CustomDataLayer {
       for(let i = 0; i < players.length; ++i){
         let p = players[i];
         document.getElementById('player' + p.license.toString()).onclick =  () => {
-            this._generateOne(p, paneOptions)
+            this._generateOne(p, paneOptions);
             return false;
           };
-      }    
+      }
+
+        document.getElementById('table_h_players_Name').onclick =  () => {
+          let ascending = 1;
+          if (paneOptions.sortAscending === undefined) {
+              paneOptions.sortAscending = 1;
+          } else {
+              ascending = paneOptions.sortAscending;
+              paneOptions.sortAscending = - paneOptions.sortAscending;
+          }
+          paneOptions.comparePlayers = this._comparePlayersOn("surname",ascending);
+            this._generateClub(dataPoint, paneOptions);
+            return false;
+        };
+
+        document.getElementById('table_h_players_Genre').onclick =  () => {
+            let ascending = 1;
+            if (paneOptions.sortAscending === undefined) {
+                paneOptions.sortAscending = 1;
+            } else {
+                ascending = paneOptions.sortAscending;
+                paneOptions.sortAscending = - paneOptions.sortAscending;
+            }
+            paneOptions.comparePlayers = this._comparePlayersOn("gender",ascending);
+            this._generateClub(dataPoint, paneOptions);
+            return false;
+        };
+
+        document.getElementById('table_h_players_S').onclick =  () => {let ascending = 1;
+            if (paneOptions.sortAscending === undefined) {
+                paneOptions.sortAscending = 1;
+            } else {
+                ascending = paneOptions.sortAscending;
+                paneOptions.sortAscending = - paneOptions.sortAscending;
+            }
+            paneOptions.comparePlayers = this._comparePlayersOn("rank_solo",ascending);
+            this._generateClub(dataPoint, paneOptions);
+            return false;
+        };
+
+        document.getElementById('table_h_players_D').onclick =  () => {
+            let ascending = 1;
+            if (paneOptions.sortAscending === undefined) {
+                paneOptions.sortAscending = 1;
+            } else {
+                ascending = paneOptions.sortAscending;
+                paneOptions.sortAscending = - paneOptions.sortAscending;
+            }
+            paneOptions.comparePlayers = this._comparePlayersOn("rank_double",ascending);
+            this._generateClub(dataPoint, paneOptions);
+            return false;
+        };
+
+        document.getElementById('table_h_players_M').onclick =  () => {let ascending = 1;
+            if (paneOptions.sortAscending === undefined) {
+                paneOptions.sortAscending = 1;
+            } else {
+                ascending = paneOptions.sortAscending;
+                paneOptions.sortAscending = - paneOptions.sortAscending;
+            }
+            paneOptions.comparePlayers = this._comparePlayersOn("rank_mixte",ascending);
+            this._generateClub(dataPoint, paneOptions);
+            return false;
+        };
+
+        document.getElementById('table_h_players_Moy').onclick =  () => {
+            let ascending = 1;
+            if (paneOptions.sortAscending === undefined) {
+                paneOptions.sortAscending = 1;
+            } else {
+                ascending = paneOptions.sortAscending;
+                paneOptions.sortAscending = - paneOptions.sortAscending;
+            }
+            paneOptions.comparePlayers = this._comparePlayersOn("rank_avg",ascending);
+            this._generateClub(dataPoint, paneOptions);
+            return false;
+        };
+
+
     }
-    
+
     onDataPointClicked(dataPoint, options){
         return (e) => {
             let title = this.getDataType();
             title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
-            
+
             let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
             let paneOptions = {
                 title: title,
