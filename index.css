@@ -224,6 +224,7 @@ th {
 .search_bar li:hover {
     background-color: #ddd;
     color: black;
+    cursor: pointer;
 }
 
 .search_bar li.active {
@@ -305,14 +306,6 @@ th {
     display: blockfont-size: 9pt;
     text-align: left;
     pointer-events: none;
-}
-
-.search-result-club {
-    background-image: url('./img/logo_boy.png');
-    background-position: 5px 10px;
-    background-repeat: no-repeat;
-    background-size: 12pt;
-    padding: 10px 10px 10px 30px;
 }
 
 #search-results-ul li:hover:not(.header) {

@@ -568,6 +568,39 @@ class ClubsLayer extends CustomDataLayer {
       }
     }
 
+    _openPlayerPane(player_id){
+        let player;
+        for (let i = 0; i < players.length; i++) {
+            if (players[i].license === player_id){
+                player = players[i];
+                console.log(player);
+                break;
+            }
+        }
+        if (player === undefined){
+            return;
+        }else {
+            let paneOptions = {
+                title: "Club",
+                locate: {
+                    latlng: {lat: player.club.lat,lng: player.club.long},
+                    zoom: CLUSTER_VISIBILITY_ZOOM,
+                    callback: () => {
+                        if (!player.club.marker.getPopup().isOpen()) {
+                            player.club.marker.openPopup();
+                        }
+                    }
+                }
+            };
+
+
+
+            this._generateOne(player, paneOptions);
+            //sidebar.open(,e.latlng, zoom);
+            sidebar.open("infoPane");
+        }
+    }
+
     _generateOne(player, paneOptions){
       let club = this.getClub(player.club_id);
 
@@ -678,6 +711,8 @@ class ClubsLayer extends CustomDataLayer {
             return false;
           };
       }
+
+       // Here we bind all the sorting methods to the table headers
 
         document.getElementById('table_h_players_Name').onclick =  () => {
           let ascending = 1;

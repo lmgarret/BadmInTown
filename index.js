@@ -312,15 +312,17 @@ function onSearchSubmit(form){
         for (let i = 0; i < clubs.length; i++) {
             let club = clubs[i];
             if (club.name.toLowerCase().includes(search_str) || club.short_name.toLowerCase().includes(search_str)){
-                result_lines += `<li><i class="fas fa-location-arrow"></i></i><a href=\"#\">(${club.short_name}) ${club.name}</a></li>`;
-            } //class="search-result-club"
+                result_lines += `<li onclick="clubsLayer.focusClub(${club.id})"><i class="fas fa-location-arrow"></i></i><a href=\"#\">(${club.short_name}) ${club.name}</a></li>`;
+            }
         }
 
         for (let i = 0; i < players.length; i++) {
             let p = players[i];
-            if (p.name.toLowerCase().includes(search_str) || p.surname.toLowerCase().includes(search_str)){
-                result_lines += `<li><i class="fas fa-user"></i><a href=\"#\">${p.name} ${p.surname.toUpperCase()}</a></li>`;
-            } //class="search-result-club"
+            if (p.name.toLowerCase().includes(search_str)
+                || p.surname.toLowerCase().includes(search_str)
+                || (p.name.toLowerCase() + " " + p.surname.toLowerCase()).includes(search_str)){
+                result_lines += `<li onclick="clubsLayer._openPlayerPane(${p.license})"><i class="fas fa-user"></i><a href=\"#\">${p.name} ${p.surname.toUpperCase()}</a></li>`;
+            }
         }
 
         if (result_lines === ""){
