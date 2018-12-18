@@ -199,7 +199,7 @@ class DivergingStackChart{
                     sidebar.moveViewTo({lat: club.lat, lng: club.long}, "open", map.getZoom());
                     club.marker.openPopup();
                 } else {
-                    clubsLayer.onMouseOverDepartment({target : clubsLayer._getDepartmentLayer(club.department)});
+                    clubsLayer.onMouseOverDepartment({target : clubsLayer.getDepartmentLayer(club.department)});
                 }
 
             })

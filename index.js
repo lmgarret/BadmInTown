@@ -1,45 +1,62 @@
+/*
+ * BadmInTown main class. Holds all
+ */
+// Initial coordinates of the map
 const INITIAL_COORD = [46.43, 2.30];
+// Initial zoom of the map
 const INITIAL_ZOOM = 5.5;
+
+// map instance
 let map;
 
+// Layer displaying all information about clubs
 let clubsLayer = new ClubsLayer();
+//Sadly deprecated, layer displaying all information about tournaments
 let tournamentsLayer = new TournamentsLayer();
+// holder of the currently displayed layer
 let activeLayer = undefined;
-let players = [];
-
+// map layer of the France in light tone
 let franceLightLayer;
 
+// list of all players
+let players = [];
+// top clubs in France
+let topClubs;
+
+
+// UI elements
 let loadingBar;
 let sidebar;
 let statsSidebarPane;
 let infoSidebarPane;
 let searchSidebarPane;
 let stackChart;
-let topClubs;
+
 main();
 
 function main() {
     create_map().then(() => {
+        // sleep in order to let UI refresh on thread
         sleep(100).then(() => {
             activeLayer = clubsLayer;
             let promiseClubs = clubsLayer.loadDataPoints(map);
 
             Promise.all([promiseClubs, loadPlayers()]).then(() => {
-                //TODO see how to integrate this
-                //sidebar.addPanel(clubsLayer.getSideBarPanelButton());
                 clubsLayer.show();
                 sidebar.open("home");
 
+                //Create and display top clubs in stack chart
                 console.log("Building stacked chart...");
-
                 stackChart = new DivergingStackChart();
                 topClubs = getNTopClubs(10, clubsLayer.getClubs(), "N");
                 stackChart.update(topClubs, "Top 10 Clubs: France");
 
+                //TODO manually set GPS coords of the following displayed clubs
+                //build a list of clubs with no assigned department as incorrect GPS coords
                 let clubsNoDepartments = [];
                 for (let i = 0; i < clubsLayer.getClubs().length; i++) {
                     let c = clubsLayer.getClubs()[i];
-                    if (c.department === undefined){
+                    if (c.department === undefined) {
                         clubsNoDepartments.push(c);
                     }
                 }
@@ -51,7 +68,12 @@ function main() {
     });
 }
 
+/**
+ * Initializes the map instance, and adds UI elements and world/France OpenStreetMap layers to it
+ * @returns {Promise} Promise of layers to wait on for completion
+ */
 function create_map() {
+    // initialize map instance
     map = L.map('map', {
         minZoom: 0,
         maxZoom: 13,
@@ -71,8 +93,11 @@ function create_map() {
     return loadBaseLayers();
 }
 
+/**
+ * Creates the UI elements (sidebar, its own panes, loading bar and franceButton) and adds them to the view
+ */
 function createUI() {
-
+    //Creating the sidebar
     sidebar = L.control.sidebar({
         //autopan: true,       // whether to maintain the centered map point when opening the sidebar
         closeButton: true,    // whether t add a close button to the panes
@@ -80,6 +105,7 @@ function createUI() {
         position: 'left',     // left or right
     }).addTo(map);
 
+    //Creates and adds the search pane to the sidebar
     searchSidebarPane = {
         id: 'searchPane',                     // UID, used to access the panel
         tab: '<i class="fa fa-search"></i>',  // content can be passed as HTML string,
@@ -95,6 +121,7 @@ function createUI() {
     };
     sidebar.addPanel(searchSidebarPane);
 
+    // Creates and adds the info pane to the sidebar
     infoSidebarPane = {
         id: 'infoPane',                     // UID, used to access the panel
         tab: '<i class="fa fa-info"></i>',  // content can be passed as HTML string,
@@ -103,6 +130,7 @@ function createUI() {
     };
     sidebar.addPanel(infoSidebarPane);
 
+    // Creates and adds the stats pane to the sidebar
     statsSidebarPane = {
         id: 'statsPane',                     // UID, used to access the panel
         pane: "<div id= \"stacked-chart-div\">" +
@@ -115,6 +143,7 @@ function createUI() {
     };
     sidebar.addPanel(statsSidebarPane);
 
+    //Creates and adds the loading bar to the view
     loadingBar = L.control.custom({
         position: 'bottomleft',
         content: htmlLoadingBar(0),
@@ -127,12 +156,13 @@ function createUI() {
             },
     });
 
+    // France button to recenter on the map
     const htmlFranceButton = '<button type="button" class="btn btn-france" id="franceButton">' +
         '   <img src="svg/fr.svg" alt="fr"  width="15" height="15" >' +
         '</button>';
 
-    let buttons;
-    buttons = L.control.custom({
+    // Create placeholder for buttons and them on map
+    L.control.custom({
         position: 'bottomright',
         content: htmlFranceButton,
         classes: 'btn-group-vertical',
@@ -158,27 +188,26 @@ function createUI() {
 
                     }
                 },
-                dblclick: function (data) {
-                    console.log('wrapper div element dblclicked');
-                    //console.log(data);
-                },
-                contextmenu: function (data) {
-                    console.log('wrapper div element contextmenu');
-                    //console.log(data);
-                },
             }
     }).addTo(map);
 }
 
+/**
+ * Creates the tile layers to display map tiles
+ * @returns {Promise<T | never>} Promise on the loading of layers
+ */
 function loadBaseLayers() {
-    const positron = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
+    // Tilelayer for the dark map
+    L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
         attribution: '©OpenStreetMap, ©CartoDB',
         useCache: true,
         crossOrigin: true,
         cacheMaxAge: 604800000, // 7 days, we don't need exact roads for this project
     }).addTo(map);
 
+    //return promise on the cutting of france map light layer
     return d3.json('geojson/france_shape_hd.geojson').then(geoJSON => {
+        // create a layer showing only france in light tone
         franceLightLayer = L.TileLayer.boundaryCanvas('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
             attribution: '©OpenStreetMap, ©CartoDB',
             boundary: geoJSON,
@@ -187,8 +216,9 @@ function loadBaseLayers() {
             cacheMaxAge: 604800000, // 7 days, we don't need exact roads for this project
         });
 
+        //add light label for the light layers
         map.createPane('labels');
-        const positronLabels = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png', {
+        L.tileLayer('http://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png', {
             attribution: '©OpenStreetMap, ©CartoDB',
             useCache: true,
             crossOrigin: true,
@@ -198,12 +228,20 @@ function loadBaseLayers() {
     });
 }
 
-function _onLoadStarted() {
+/**
+ * Callback function to trigger the displaying of the loading bar when dataPoints are being loaded
+ */
+function onLoadStarted() {
+    // nicer visually to not display the lightlayer yet when we start loading
     franceLightLayer.remove();
     loadingBar.addTo(map);
 }
 
-function _onLoadProgress() {
+/**
+ * Callback function for when there has been some progress on the loading of dataPoints. Updates the loading bar
+ * accordingly.
+ */
+function onLoadProgress() {
     let percentage = activeLayer.getLoadingPercentage();
     percentage = Math.round(percentage);
     percentage = percentage > 100 ? 100 : percentage;
@@ -219,6 +257,11 @@ function _onLoadProgress() {
     }
 }
 
+/**
+ * Generates html code for the loading bar
+ * @param percentage % of advancement on the loading of data
+ * @returns {string} html code for the status of the progress bar
+ */
 function htmlLoadingBar(percentage) {
     return `<div class="panel-body">` +
         `    <div class="progress" style="margin-bottom:0px;">` +
@@ -231,10 +274,23 @@ function htmlLoadingBar(percentage) {
 
 }
 
+/**
+ * Helper function to emulate the 'sleep' in ms of other programming languages. Useful when loading lots of points
+ * in a Promise and in need to update the UI. Sleeping for a very small (e.g. 50ms) allows the engine to properly
+ * update the displayed UI.
+ * @param time time to sleep in milliseconds
+ * @returns {Promise<any>} returns a promise to wait on
+ */
 function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+/**
+ * DEPRECATED
+ *
+ * Toggles between club and tournaments layer
+ * @param event onclick event
+ */
 function toggleLayerButton(event) {
     sidebar.close();
     let title = "Info";
@@ -260,6 +316,12 @@ function toggleLayerButton(event) {
     }
 }
 
+/**
+ * DEPRECATED
+ * Sets the visible layer and disables the other layers
+ * @param layer layer to show and set active
+ * @param otherLayers layers to deactivate/hide
+ */
 function setActiveLayer(layer, otherLayers = []) {
     activeLayer = layer;
 
@@ -274,11 +336,16 @@ function setActiveLayer(layer, otherLayers = []) {
     activeLayer.show();
 }
 
+/**
+ * Loads the players from csv, and assign them to clubs.
+ * @return d3 Promise on the loading of players
+ */
 function loadPlayers() {
     console.log("Loading players...");
     return d3.csv("data/Player.csv", d => {
         try {
             let player = new Player(d);
+            //assign player to club and vice-versa
             player.club = clubsLayer.getClub(player.club_id);
             if (player.club !== undefined) {
                 player.club.addPlayer(player);
@@ -292,45 +359,54 @@ function loadPlayers() {
     });
 }
 
-function onSearchSubmit(form){
+/**
+ * Callback function whenever text is updated in it. Updated the search div to display results of the search
+ * in clubs and players.
+ * @param form the input UI element
+ */
+function onSearchSubmit(form) {
     let search_str = form.value.toLowerCase();
 
-    if(search_str === ""){
-        let innerHTML = "Type in the name of a club or a player and we'll find it for you!";
-        document.getElementById("search-results-holder").innerHTML = innerHTML;
+    if (search_str === "") {
+        //case nothing in search field. Display a generic search message
+        document.getElementById("search-results-holder").innerHTML = "Type in the name of a club or a player and we'll find it for you!";
 
-    } else if (search_str.length < 2){
-        let innerHTML = "Type in at least 2 letters...";
-        document.getElementById("search-results-holder").innerHTML = innerHTML;
+    } else if (search_str.length < 2) {
+        //case less than two letters, we search for only more than 2 letters
+        document.getElementById("search-results-holder").innerHTML = "Type in at least 2 letters...";
 
     } else {
+        //holder of html lines
         let result_html = "<ul id=\"search-results-ul\">\n";
-
         let result_lines = "";
 
         let clubs = clubsLayer.getClubs();
+
+        //search in clubs, on name and short_name
         for (let i = 0; i < clubs.length; i++) {
             let club = clubs[i];
-            if (club.name.toLowerCase().includes(search_str) || club.short_name.toLowerCase().includes(search_str)){
+            if (club.name.toLowerCase().includes(search_str) || club.short_name.toLowerCase().includes(search_str)) {
                 result_lines += `<li onclick="clubsLayer.focusClub(${club.id})"><i class="fas fa-location-arrow"></i></i><a href=\"#\">(${club.short_name}) ${club.name}</a></li>`;
             }
         }
 
+        //search in players, on name, surname and name + surname
         for (let i = 0; i < players.length; i++) {
             let p = players[i];
             if (p.name.toLowerCase().includes(search_str)
                 || p.surname.toLowerCase().includes(search_str)
-                || (p.name.toLowerCase() + " " + p.surname.toLowerCase()).includes(search_str)){
+                || (p.name.toLowerCase() + " " + p.surname.toLowerCase()).includes(search_str)) {
                 result_lines += `<li onclick="clubsLayer._openPlayerPane(${p.license})"><i class="fas fa-user"></i><a href=\"#\">${p.name} ${p.surname.toUpperCase()}</a></li>`;
             }
         }
 
-        if (result_lines === ""){
+        if (result_lines === "") {
             result_lines = "No result for " + search_str + ".";
         }
 
         result_html += result_lines + "</ul>";
 
+        //update search div
         document.getElementById("search-results-holder").innerHTML = result_html;
     }
 }
