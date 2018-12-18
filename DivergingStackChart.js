@@ -2,7 +2,7 @@
 class DivergingStackChart{
     constructor(){
         this.margin = {top: 25, right: 20, bottom: 10, left: 10};
-        this.width = 390 - this.margin.left - this.margin.right;
+        this.width = 370 - this.margin.left - this.margin.right;
         this.height = 400 - this.margin.top - this.margin.bottom;
 
         this.keyLegendMapping = [
