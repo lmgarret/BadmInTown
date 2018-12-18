@@ -89,7 +89,7 @@
   bottom: 0;
   background-color: rgba(255, 255, 255, 0.95);
   overflow-x: unset;
-  overflow-y: unset; }
+  overflow-y: auto; }
   .leaflet-sidebar-left .leaflet-sidebar-content {
     left: 40px;
     right: 0; }

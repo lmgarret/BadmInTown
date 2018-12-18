@@ -135,7 +135,7 @@ class Player {
         this.rank_solo = data.S;
         this.rank_double = data.D;
         this.rank_mixte = data.M;
-        this.rank_avg = data.Moy;
+        this.rank_avg = _parseNumber(data.Moy);
         this.club_id = _parseNumber(data.club_id);
     }
 }
