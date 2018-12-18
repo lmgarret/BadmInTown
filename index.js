@@ -13,6 +13,7 @@ let loadingBar;
 let sidebar;
 let statsSidebarPane;
 let infoSidebarPane;
+let searchSidebarPane;
 let stackChart;
 let topClubs;
 main();
@@ -79,6 +80,18 @@ function createUI() {
         position: 'left',     // left or right
     }).addTo(map);
 
+    searchSidebarPane = {
+        id: 'searchPane',                     // UID, used to access the panel
+        tab: '<i class="fa fa-search"></i>',  // content can be passed as HTML string,
+        pane: "<div class=\"search_bar\">\n" +
+            "  <div class=\"search-container\">\n" +
+            "      <input type=\"text\" placeholder=\"Search a club, a player...\" name=\"search\" onkeyup=\"onSearchSubmit(this)\">\n" +
+            "  </div>\n" +
+            "</div>",              // an optional pane header
+        title: 'Search',              // an optional pane header
+    };
+    sidebar.addPanel(searchSidebarPane);
+
     infoSidebarPane = {
         id: 'infoPane',                     // UID, used to access the panel
         tab: '<i class="fa fa-info"></i>',  // content can be passed as HTML string,
@@ -86,7 +99,6 @@ function createUI() {
         title: 'Info',              // an optional pane header
     };
     sidebar.addPanel(infoSidebarPane);
-
 
     statsSidebarPane = {
         id: 'statsPane',                     // UID, used to access the panel
@@ -275,4 +287,8 @@ function loadPlayers() {
             return undefined;
         }
     });
+}
+
+function onSearchSubmit(search_str){
+    console.log(search_str.value);
 }
