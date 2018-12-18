@@ -194,7 +194,13 @@ class DivergingStackChart{
                     .style('left', d3.event.pageX + 'px')
                     .style('top', d3.event.pageY - 28 + 'px');
                 let club = clubsLayer.getClub(this.__data__.data.id);
-                clubsLayer.onMouseOverDepartment({target : clubsLayer._getDepartmentLayer(club.department)});
+
+                if (map.getZoom() >= CLUSTER_VISIBILITY_ZOOM){
+                    sidebar.moveViewTo({lat: club.lat, lng: club.long}, "open", map.getZoom());
+                    club.marker.openPopup();
+                } else {
+                    clubsLayer.onMouseOverDepartment({target : clubsLayer._getDepartmentLayer(club.department)});
+                }
 
             })
             .on('mouseout', function() {
