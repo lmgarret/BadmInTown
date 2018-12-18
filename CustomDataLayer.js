@@ -24,7 +24,6 @@ class CustomDataLayer {
         this.loadedDepartments = 0;
         this.totalDepartments = 101;
 
-        this.infoLabel = L.control();
         this.sidebarPanelButton = {
             id: 'dataPanel',                     // UID, used to access the panel
             tab: '<i class="fa fa-question" style="color: black;"></i>',  // content can be passed as HTML string,
@@ -32,14 +31,8 @@ class CustomDataLayer {
             title: 'Data',              // an optional pane header
             button: toggleLayerButton
         };
-        this.infoLabel.onAdd = function (map) {
-            this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-            this.update();
-            return this._div;
-        };
-        this.infoLabel.update = this.updateInfoLabel;
 
-        this.legendLabel = L.control({position: 'bottomright'});
+        this.legendLabel = L.control({position: 'topright'});
         this.legendLabel.onAdd = function (map) {
             this._div = L.DomUtil.create('div', 'info legend');
             this.update();
@@ -119,13 +112,22 @@ class CustomDataLayer {
         return this.loadingPromise;
     }
 
+    _getDepartmentLayer(department){
+        let layer = undefined;
+        this.department_layer.eachLayer(l => {
+            if (l.feature.properties.code === department.properties.code) {
+                layer = l;
+            }
+        });
+        return layer;
+    }
+
     show() {
         this.loadingPromise.then(() => {
             this.visible = true;
 
             this.department_layer.addTo(map);
             this.markerCluster.addTo(map);
-            this.infoLabel.addTo(map);
             this.legendLabel.addTo(map);
 
             map.removeLayer(this.markerCluster);
@@ -147,7 +149,6 @@ class CustomDataLayer {
             } else {
                 map.removeLayer(this.markerCluster);
             }
-            map.addControl(this.infoLabel);
             map.addControl(this.legendLabel);
         });
     }
@@ -159,7 +160,6 @@ class CustomDataLayer {
 
             map.removeLayer(this.department_layer);
             map.removeLayer(this.markerCluster);
-            map.removeControl(this.infoLabel);
             map.removeControl(this.legendLabel);
         });
     }
@@ -217,11 +217,11 @@ class CustomDataLayer {
     computeDepartmentDensity(department, dataPoints) {
         department.properties.density = 0;
         dataPoints.forEach(dataPoint => {
-            if (dataPoint.department_code === undefined) {
+            if (dataPoint.department === undefined) {
                 let point = turf.point([dataPoint.long, dataPoint.lat]);
                 if (turf.inside(point, department)) {
                     department.properties.density++;
-                    dataPoint.department_code = department.properties.code;
+                    dataPoint.department = department;
                 }
             }
         });
@@ -296,8 +296,6 @@ class CustomDataLayer {
             dashArray: '',
             fillOpacity: 0,
         });
-
-        this.infoLabel.update(layer.feature.properties);
     }
 
     onMouseOutDepartment(e) {
@@ -309,7 +307,6 @@ class CustomDataLayer {
         if (!turf.inside(point, polygon) && !layer.feature.properties.isSelected) {
             this.department_layer.resetStyle(e.target);
         }
-        this.infoLabel.update();
     }
 
     onClickDepartment(e) {
@@ -381,17 +378,11 @@ class CustomDataLayer {
         return "dataPoint";
     }
 
-
-    updateInfoLabel(props) {
-        this._div.innerHTML = '<h4>DataPoints density</h4>' + (props ?
-            '<b>' + props.nom + '</b><br />' + props.density + ' datapoints</sup>'
-            : 'Hover over a department');
-    }
-
     updateLegendLabel(colorFct, colorGradesFct, opacityFct) {
         return function (props) {
             let colorGrades = colorGradesFct();
             let div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML += `<h4>Datapoint density</h4>`;
 
             // loop through our density intervals and generate a label with a colored square for each interval
             for (let i = 0; i < colorGrades.length; i++) {
@@ -459,10 +450,22 @@ class ClubsLayer extends CustomDataLayer {
         return "#0D47A1"
     }
 
-    updateInfoLabel(props) {
-        this._div.innerHTML = '<h4>Clubs density</h4>' + (props ?
-            '<b>' + props.nom + '</b><br />' + props.density + ' clubs</sup>'
-            : 'Hover over a department');
+    updateLegendLabel(colorFct, colorGradesFct, opacityFct) {
+        return function (props) {
+            let colorGrades = colorGradesFct();
+            let div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML += `<h4>Clubs density</h4>`;
+
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (let i = 0; i < colorGrades.length; i++) {
+                let colorStr = colorFct(colorGrades[i] + 1);
+                let opacityStr = opacityFct(false);
+                div.innerHTML +=
+                    `<i style="background: ${colorStr}; opacity: ${opacityStr}"></i>` +
+                    colorGrades[i] + (colorGrades[i + 1] ? '&ndash;' + colorGrades[i + 1] + '<br>' : '+');
+            }
+            this._div.innerHTML = div.innerHTML;
+        };
     }
 
     getClubs() {
@@ -514,13 +517,163 @@ class ClubsLayer extends CustomDataLayer {
             }
         }
     }
+    
+    _compare(a,b) {
+      if (a.rank_avg < b.rank_avg){
+        return 1;
+      } else if (a.rank_avg > b.rank_avg){
+        return -1;
+      } else{
+        return 0;
+      }
+      
+    }
+    
+    _getColor(rank) {
+      let colors = [
+          "#BF360C",
+          "#EF6C00",
+          "#FFB300",
+          "#FFEE58",
+          "#FFF9C4",
+      ];
+      
+      if(rank === "N1" || rank === "N2" || rank === "N3"){
+        return colors[0];
+      } else if(rank === "R4" || rank === "R5" || rank === "R6"){
+        return colors[1];
+      } else if(rank === "D7" || rank === "D8" || rank === "D9"){
+        return colors[2];
+      } else if(rank === "P10" || rank === "P11" || rank === "P12"){
+        return colors[3];
+      } else {
+        return colors[4];
+      }
+    }
+    
+    _getImage(genre){
+      if(genre == 0){
+        return "img/logo_boy.png";
+      } else {
+        return "img/logo_girl.png"
+      }
+    }
+    
+    _generateOne(player, paneOptions){
+      let club = this.getClub(player.club_id);
+      
+      let html = `
+      <div class="clickable" id="backButton"> < back to club ${club.name}</div>
+      <div>
+      <div style="float: right; text-align:right;">
+      <img src="${this._getImage(player.gender)}">
+      </div>
+      
+      <h1 style="size:200px;">${player.name} ${player.surname}</h1>
+      
+      <h3 style="size:200px;"> license number: ${player.license}</h3>
+      
+      Points average: ${player.rank_avg} 
+      </div>
+      
+      <div class="radarChart"></div>` 
+      
+      
+      sidebar.updatePaneHTML("infoPane", html, paneOptions);
+      createPlot(player, 300)
+      document.getElementById('backButton').onclick =  () => {
+          this._generateClub(club, paneOptions)
+          return false;
+        };
+      return html
+		
+    }
+    
+    _generatePlayersHtml(dataPoint, paneOptions){
+      let players = dataPoint.players.sort(this._compare);
+      let html = `<div>
+        <table>
+          <tbody><tr><td><h3>
+            <a></a>Les joueurs en 2018-2019
+          </h3></td></tr>
+          <tr><td><br>
+          <table><tbody><tr>
+          <th>
+            <a> Nom Prénom </a>
+          </th>
+          <th>
+            <a> Genre </a>
+          </th>
+          <th>
+            <a > S </a>
+          </th>
+          <th>
+            <a> D </a>
+          </th>
+          <th>
+            <a> M </a>
+          </th>
+          <th>
+            <a> Moy </a>
+          </th>`;
+          
+        for (let index = 0; index < players.length; index++) {
+          const p = players[index];
+          let gender = 'M';
+          if(parseInt(p.gender)){
+            gender = 'F'
+          }
+          html += `</tr><tr>
+          <td><a id="player${p.license}">${p.name + " " + p.surname.toUpperCase()}</a></td>
+          <td align="center">${gender}</td>
+          <td bgcolor="${this._getColor(p.rank_solo)}" align="center">${p.rank_solo}</td>
+          <td bgcolor="${this._getColor(p.rank_double)}" align="center">${p.rank_double}</td>
+          <td bgcolor="${this._getColor(p.rank_mixte)}" align="center">${p.rank_mixte}</td>
+          <td align="right">${p.rank_avg}</td>
+          </tr>`    
+        }
+        
+        html += `</tbody></table>
+        </td></tr></tbody></table>
+        </div>`
+        
+        return html;
+
+      
+    }
+    
+    _generateClubHtml(dataPoint, paneOptions){
+      let rawHtml = dataPoint.html;
+      rawHtml = rawHtml.replace(/(\r\n|\n|\r)/gm,"");
+      let htmlNoLogo = /<div[^>]*>(.*)<\/div>/gm.exec(rawHtml);
+      let html = htmlNoLogo[1];
+      let logoLink = /.*src="([^"]*)".*/gm.exec(html);
+      
+      
+      if(logoLink[1].startsWith("../")){
+        html = html.replace(/..\/img\/3\/logo_club.jpg/gm, "img/logo_club.jpg")
+      }
+      return html + this._generatePlayersHtml(dataPoint, paneOptions);
+    }
+    
+    _generateClub(dataPoint, paneOptions){
+      let html = this._generateClubHtml(dataPoint, paneOptions);
+      sidebar.updatePaneHTML("infoPane", html, paneOptions);
+      let players = dataPoint.players;
+      for(let i = 0; i < players.length; ++i){
+        let p = players[i];
+        document.getElementById('player' + p.license.toString()).onclick =  () => {
+            this._generateOne(p, paneOptions)
+            return false;
+          };
+      }    
+    }
+    
     onDataPointClicked(dataPoint, options){
         return (e) => {
             let title = this.getDataType();
             title = title[0].toUpperCase() + title.substr(1); //put first letter to uppercase
-            let rawHtml = dataPoint.html;
-            rawHtml = rawHtml.replace(/(\r\n|\n|\r)/gm,"");
-            let html = /<div[^>]*>(.*)<\/div>/gm.exec(rawHtml);
+            
             let zoom = options.locate.zoom === undefined ? map.getZoom() : options.locate.zoom;
             let paneOptions = {
                 title: title,
@@ -530,7 +683,8 @@ class ClubsLayer extends CustomDataLayer {
                     callback: options.locate.callback
                 }
             };
-            sidebar.updatePaneHTML("infoPane", html[1],paneOptions);
+            let html = this._generateClub(dataPoint, paneOptions)
+            //sidebar.updatePaneHTML("infoPane", html, paneOptions);
             sidebar.open("infoPane",e.latlng, zoom);
         }
     }
@@ -572,11 +726,6 @@ class TournamentsLayer extends CustomDataLayer {
         return '#E65100'
     }
 
-    updateInfoLabel(props) {
-        this._div.innerHTML = '<h4>Tournaments density</h4>' + (props ?
-            '<b>' + props.nom + '</b><br />' + props.density + ' tournaments</sup>'
-            : 'Hover over a department');
-    }
 
     onDataPointParsed(dataPoint) {
         let tournament = new Tournament(dataPoint);

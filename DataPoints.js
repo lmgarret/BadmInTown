@@ -76,13 +76,7 @@ class Club extends GraphicalDataPoint {
 
     updateRankCount(player, ranks, callback) {
         let count = 0;
-        if (ranks.includes(player.rank_solo)) {
-            count++;
-        }
-        if (ranks.includes(player.rank_double)) {
-            count++;
-        }
-        if (ranks.includes(player.rank_mixte)) {
+        if (ranks.includes(player.rank_solo) || ranks.includes(player.rank_double) || ranks.includes(player.rank_mixte)) {
             count++;
         }
 
@@ -141,7 +135,7 @@ class Player {
         this.rank_solo = data.S;
         this.rank_double = data.D;
         this.rank_mixte = data.M;
-        this.rank_avg = data.Moy;
+        this.rank_avg = _parseNumber(data.Moy);
         this.club_id = _parseNumber(data.club_id);
     }
 }
@@ -167,7 +161,7 @@ function getNTopClubs(n, clubs) {
 function getClubsInDepartment(department_code, clubs) {
     let result = [];
     for (let i = 0; i < clubs.length; i++) {
-        if (clubs[i].department_code === department_code) {
+        if (clubs[i].department !== undefined && clubs[i].department.properties.code === department_code) {
             result.push(clubs[i]);
         }
     }

@@ -2,22 +2,10 @@
 class DivergingStackChart{
     constructor(){
         this.margin = {top: 25, right: 20, bottom: 10, left: 10};
-        this.width = 460 - this.margin.left - this.margin.right;
+        this.width = 390 - this.margin.left - this.margin.right;
         this.height = 400 - this.margin.top - this.margin.bottom;
 
         this.keyLegendMapping = [
-            {
-                name: "National (N)",
-                key: "rank_N_count"
-            },
-            {
-                name: "Regional (R)",
-                key: "rank_R_count"
-            },
-            {
-                name: "Departmental (D)",
-                key: "rank_D_count"
-            },
             {
                 name: "No Ranking (NC)",
                 key: "rank_NC_count"
@@ -25,6 +13,18 @@ class DivergingStackChart{
             {
                 name: "Communal (P)",
                 key: "rank_P_count"
+            },
+            {
+                name: "Departmental (D)",
+                key: "rank_D_count"
+            },
+            {
+                name: "Regional (R)",
+                key: "rank_R_count"
+            },
+            {
+                name: "National (N)",
+                key: "rank_N_count"
             },
 
         ];
@@ -68,9 +68,9 @@ class DivergingStackChart{
             let d = {
                 id: data[i].id,
                 name: data[i].name,
-                rank_N_count: data[i].rank_N_count,
-                rank_R_count: data[i].rank_R_count,
-                rank_D_count: data[i].rank_D_count,
+                rank_N_count: - data[i].rank_N_count,
+                rank_R_count: - data[i].rank_R_count,
+                rank_D_count: - data[i].rank_D_count,
                 //we inverse values to have the values spread left and right of the axis
                 rank_P_count: - data[i].rank_P_count,
                 rank_NC_count: - data[i].rank_NC_count,
@@ -109,12 +109,12 @@ class DivergingStackChart{
         //update the legend
         let legendDiv = L.DomUtil.create('div', 'legend');
 
-        // loop through our density intervals and generate a label with a colored square for each interval
-        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[0]);
-        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[1]);
-        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[2]);
         legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[4]);
         legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[3]);
+        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[2]);
+        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[1]);
+        // loop through our density intervals and generate a label with a colored square for each interval
+        legendDiv.innerHTML += this._createLegendItemHTML(this.keyLegendMapping[0]);
 
         document.getElementById("stacked-chart-legend").innerHTML = legendDiv.innerHTML;
 
@@ -166,22 +166,16 @@ class DivergingStackChart{
             .style('opacity', 0);
 
         function getRankFromRange(range, club){
-            if (range[1] <= 0 && range[0] <=0){
-                if(range[1] === 0){
-                    return "P";
-                } else {
-                    return "NC";
-                }
-            } else if (range[0] >=0 && range[1] >= 0){
-                if (range[0] === 0){
-                    return "D";
-                } else if(range[0] === club.rank_D_count){
-                    return "R";
-                } else {
-                    return "N";
-                }
-            } else {
-                return "?";
+            if (range[0] === club.rank_N_count){
+                return "National"
+            } else if (range[0] === club.rank_N_count + club.rank_R_count){
+                return "Regional"
+            } else if (range[0] === club.rank_N_count + club.rank_R_count + club.rank_D_count){
+                return "Departmental"
+            }else if (range[0] === club.rank_N_count + club.rank_R_count + club.rank_D_count + club.rank_P_count){
+                return "Communal"
+            }else {
+                return "No Ranking"
             }
         }
 
@@ -199,6 +193,9 @@ class DivergingStackChart{
                 div.html(`${Math.abs(d[1] - d[0])} ${getRankFromRange(d,d.data)}`)
                     .style('left', d3.event.pageX + 'px')
                     .style('top', d3.event.pageY - 28 + 'px');
+                let club = clubsLayer.getClub(this.__data__.data.id);
+                clubsLayer.onMouseOverDepartment({target : clubsLayer._getDepartmentLayer(club.department)});
+
             })
             .on('mouseout', function() {
                 d3.select(this).classed("bar-chart-hover", false);
