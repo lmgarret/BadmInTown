@@ -148,9 +148,11 @@ function getNTopClubs(n, clubs) {
         for (let i = 0; i < ranks.length; i++) {
             let r = ranks[i];
             if (club1.getPlayersCountRanked(r) < club2.getPlayersCountRanked(r)) {
-                return true
+                return 1
             } else if (club1.getPlayersCountRanked(r) > club2.getPlayersCountRanked(r)) {
-                return false
+                return -1
+            } else {
+                return 0;
             }
         }
 
