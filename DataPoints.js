@@ -131,7 +131,7 @@ class Player {
         this.license = _parseNumber(data.license);
         this.name = data.name;
         this.surname = data.surname;
-        this.gender = data.gender;
+        this.gender = _parseNumber(data.gender);
         this.rank_solo = data.S;
         this.rank_double = data.D;
         this.rank_mixte = data.M;
