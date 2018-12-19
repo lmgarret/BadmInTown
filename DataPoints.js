@@ -1,9 +1,20 @@
+/*
+ * All classes here are a reprensentation of a datapoint parsed from a csv.
+ */
+
+//mappings of different strings to the real rank
 const RANKS_NATIONAL = ["N", "N1", "N2", "N3", "N+", "N-"];
 const RANKS_REGIONAL = ["R", "R4", "R5", "R6", "R+", "R-"];
 const RANKS_DEPARTMENTAL = ["D", "D7", "D8", "D9", "D+", "D-"];
 const RANKS_COMMUNAL = ["P", "P10", "P11", "P12", "P+", "P-"];
 const RANKS_NONE = ["NC", "?"];
 
+/**
+ * Attempts to parse a given arg to a number. Supports types number and strings
+ * @param arg the arg to parsec
+ * @return {number} the parsed number if possible
+ * @private
+ */
 function _parseNumber(arg) {
     const varToString = varObj => Object.keys(varObj)[0]
 
@@ -16,6 +27,9 @@ function _parseNumber(arg) {
     }
 }
 
+/**
+ * Super generic class, representing a DataPoint parsed from a csv
+ */
 class GraphicalDataPoint {
     constructor(data) {
         this.id = _parseNumber(data.id);
@@ -25,6 +39,9 @@ class GraphicalDataPoint {
     }
 }
 
+/**
+ * Specific DataPoint class representing a club
+ */
 class Club extends GraphicalDataPoint {
     constructor(data) {
         super(data);
@@ -41,10 +58,17 @@ class Club extends GraphicalDataPoint {
         this.rank_avg = 0;
     }
 
+    /**
+     * @return {Array} array of players in this club. Undefined if not filled !
+     */
     getPlayers() {
         return this.players;
     }
 
+    /**
+     * Adds a player to the list of players in this club, and update the rank counts accordingly
+     * @param player player to add to the club
+     */
     addPlayer(player) {
         this.players.push(player);
 
@@ -57,6 +81,11 @@ class Club extends GraphicalDataPoint {
         this.rank_avg = (this.rank_avg * (this.players.length - 1) + player.rank_avg) / this.players.length;
     }
 
+    /**
+     * Compute and returns the number of players of the given rank
+     * @param rank the rank to get the player number from
+     * @return {number|*} number of players of this rank in this club
+     */
     getPlayersCountRanked(rank) {
         switch (rank) {
             case "N":
@@ -74,6 +103,12 @@ class Club extends GraphicalDataPoint {
         }
     }
 
+    /**
+     * Gives to the callback function the new number of players with the given rank after adding the given player
+     * @param player player to be added
+     * @param ranks ranks to compute the count for
+     * @param callback callback function that is given the count
+     */
     updateRankCount(player, ranks, callback) {
         let count = 0;
         if (ranks.includes(player.rank_solo) || ranks.includes(player.rank_double) || ranks.includes(player.rank_mixte)) {
@@ -83,10 +118,17 @@ class Club extends GraphicalDataPoint {
         callback(count);
     }
 
+    /**
+     * @return {number} the average rank (number) of players in this club
+     */
     getRankAVG() {
         return this.rank_avg;
     }
 
+    /**
+     * DEPRECATED
+     * @private
+     */
     _getPlayersCountRanked(ranks) {
         let count = 0;
         for (let i = 0; i < this.players.length; i++) {
@@ -107,6 +149,10 @@ class Club extends GraphicalDataPoint {
 
 }
 
+/**
+ * DEPRECATED
+ * Specific DataPoint class representing a tournament
+ */
 class Tournament extends GraphicalDataPoint {
     constructor(data) {
         super(data);
@@ -126,6 +172,10 @@ class Tournament extends GraphicalDataPoint {
 
 }
 
+/**
+ * DEPRECATED
+ * Specific DataPoint class representing a player
+ */
 class Player {
     constructor(data) {
         this.license = _parseNumber(data.license);
