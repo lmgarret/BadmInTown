@@ -1,10 +1,14 @@
-
+/**
+ * Class responsible for creating, updating and showing the Stack chart representing clubs depending on their levels,
+ * which is determined on the number of players in national then regional then departmental etc...
+ */
 class DivergingStackChart{
     constructor(){
         this.margin = {top: 25, right: 20, bottom: 10, left: 10};
         this.width = 370 - this.margin.left - this.margin.right;
         this.height = 400 - this.margin.top - this.margin.bottom;
 
+        //Names and fields for the legend
         this.keyLegendMapping = [
             {
                 name: "No Ranking (NC)",
@@ -61,6 +65,11 @@ class DivergingStackChart{
 
     }
 
+    /**
+     * Processes data in order to get it in the correct order
+     * @param data clubs to format
+     * @return {Array} formatted data array
+     */
     formatData(data){
         let formattedData = [];
 
@@ -98,11 +107,23 @@ class DivergingStackChart{
         return formattedData;
     }
 
+    /**
+     * Generates the HTML code for one element of the legend
+     * @param keyMapping tuple from keyLegendMapping to use to create the legend
+     * @return {string} html ready code
+     * @private
+     */
     _createLegendItemHTML(keyMapping){
         return `<i style="background: ${this.z(keyMapping.key)}"></i>` +
             keyMapping.name + '<br>'
     }
 
+    /**
+     * Update the chart with the given data and title. Generates the new HTML code and animates its replacement in the
+     * chart's div.
+     * @param data new clubs to display
+     * @param title string title of the chart
+     */
     update(data,title) {
         this.data = this.formatData(data);
 
@@ -165,6 +186,12 @@ class DivergingStackChart{
             .attr('class', 'tooltip')
             .style('opacity', 0);
 
+        /**
+         * Return a rank depending on the range it is being on
+         * @param range range of index it displayed on
+         * @param club the club being displayed
+         * @return {string} a string caption for the tooltip, corresponding to the rank
+         */
         function getRankFromRange(range, club){
             if (range[0] === club.rank_N_count){
                 return "National"
