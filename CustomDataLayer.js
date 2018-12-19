@@ -530,10 +530,18 @@ class CustomDataLayer {
     /**
      * Changes the style of all departments to show all as unselected
      */
-    deselectAllDepartments() {
+    deselectAllDepartments(excepted = undefined) {
         this.department_layer.eachLayer(l => {
-            l.feature.properties.isSelected = false;
-            this.department_layer.resetStyle(l);
+			if (excepted !== undefined && excepted === l.feature) {
+				l.feature.properties.isSelected = true;
+				l.setStyle({
+					dashArray: '',
+					fillOpacity: 0,
+				});
+			} else {
+				l.feature.properties.isSelected = false;
+				this.department_layer.resetStyle(l);
+			}
         });
     }
 
@@ -657,6 +665,8 @@ class ClubsLayer extends CustomDataLayer {
      */
     focusClub(club_id) {
         let club = this.getClub(club_id);
+		
+		
 
         if (club !== undefined) {
             let zoom = 11;
