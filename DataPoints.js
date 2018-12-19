@@ -201,12 +201,10 @@ function getNTopClubs(n, clubs) {
                 return 1
             } else if (club1.getPlayersCountRanked(r) > club2.getPlayersCountRanked(r)) {
                 return -1
-            } else {
-                return 0;
             }
         }
 
-        return true;
+        return 0;
     }).slice(0, n);
 }
 
