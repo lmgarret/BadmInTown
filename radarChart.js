@@ -11,6 +11,9 @@ const cos = Math.cos;
 const HALF_PI = Math.PI / 2;
 const PI = Math.PI;
 
+/**
+ * takes a player level given as a string and returns its equivalent int value
+ */
 function getNumber(d){
 	if(d == 'NC') return 0;
 	if(d == 'P12') return 1;
@@ -25,9 +28,13 @@ function getNumber(d){
 	if(d == 'N3') return 10;
 	if(d == 'N2') return 11;
 	if(d == 'N1') return 12;
-
+	
 }
 
+/**
+ * Takes a player and a width, and creates a star chart for the levels
+ * of that player. 
+ */
 function createPlot(player, wi){
 	var margin = { top: 50, right: 30, bottom: 20, left: 30 },
 	width = Math.min(wi, window.innerWidth / 4) - margin.left - margin.right,
@@ -41,7 +48,7 @@ function createPlot(player, wi){
 			]
 		}
 	];
-
+	
 	var radarChartOptions = {
 		w: wi,
 		h: wi,
@@ -53,7 +60,7 @@ function createPlot(player, wi){
 	};
 
 	// Draw the chart, get a reference the created svg element :
-	let svg_radar1 = RadarChart(".radarChart", data, radarChartOptions);
+	let svg_radar1 = RadarChart(".leaflet-sidebar-pane-content", data, radarChartOptions);
 }
 
 
@@ -169,7 +176,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 	/////////////////////////////////////////////////////////
 	/////////////// Draw the Circular grid //////////////////
 	/////////////////////////////////////////////////////////
-
+	
 	function getLevel(d){
 		if(d == 0) return 'NC';
 		if(d == 1) return 'P12';
@@ -184,9 +191,9 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 		if(d == 10) return 'N3';
 		if(d == 11) return 'N2';
 		if(d == 12) return 'N1';
-
+		
 	}
-
+	
 	function getColor(d){
 		if(d <= 0) return "#fffce5";
 		if(1 <= d && d < 4) return "#fff6a8";
@@ -195,7 +202,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 		if(10 <= d) return "#bc7864";
 
 	}
-
+	
 	function getStrokeColor(d){
 		if(d == 0) return "#e0dbac";
 		if(d == 1) return "#d3c547";
@@ -211,10 +218,10 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 		if(d == 11) return "#8c2708";
 		if(d == 12) return "#8c2708";
 	}
-
+	
 	//Wrapper for the grid & axes
 	var axisGrid = g.append("g").attr("class", "axisWrapper");
-
+	
 	//Draw the background circles
 	axisGrid.selectAll(".levels")
 		 .data(d3.range(1,(cfg.levels+1)).reverse())
@@ -238,20 +245,20 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 			return 7 + cos( -1 * PI / 6) * sdm[1]*radius/cfg.levels;
 		} else {
 			return -20 + cos( -5 * PI / 6) * sdm[2]*radius/cfg.levels;
-		}
+		}	
 	}
 	function getY(category){
 		if(category == 0){
-			return  4 - sdm[0]*radius/cfg.levels;
+			return  - sdm[0]*radius/cfg.levels;			
 		} else if(category == 1){
 			return 4 - sin( -1 * PI / 6) * sdm[1]*radius/cfg.levels;
 		} else {
 			return 4 - sin( -5 * PI / 6) * sdm[2]*radius/cfg.levels;
 		}
 	}
-
-
-
+	
+	
+	
 	axisGrid.selectAll(".axisLabel")
 	   .data(d3.range(1,(cfg.levels+1)).reverse())
 	   .enter().append("text")
@@ -261,7 +268,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 	   .style("font-size", "10px")
 	   .attr("fill", "#777777")
 	   .text(function(d,i) { return getLevel(d); });
-
+		 
 	//Text indicating at what % each level is
  	for(let i = 0; i < 3; ++i){
  		axisGrid.append("text")
@@ -272,7 +279,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
  			.text(getLevel(sdm[i]))
  	}
 
-
+	
 
 	/////////////////////////////////////////////////////////
 	//////////////////// Draw the axes //////////////////////
