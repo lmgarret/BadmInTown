@@ -838,22 +838,22 @@ class ClubsLayer extends CustomDataLayer {
           <tr><td><br>
           <table><tbody><tr>
           <th>
-            <a id="table_h_players_Name"> Nom Prénom </a>
+            <a class="clickable" id="table_h_players_Name"> Nom Prénom </a>
           </th>
           <th>
-            <a id="table_h_players_Genre"> Genre </a>
+            <a class="clickable" id="table_h_players_Genre"> Genre </a>
           </th>
           <th>
-            <a id="table_h_players_S"> S </a>
+            <a class="clickable" id="table_h_players_S"> S </a>
           </th>
           <th>
-            <a id="table_h_players_D"> D </a>
+            <a class="clickable" id="table_h_players_D"> D </a>
           </th>
           <th>
-            <a id="table_h_players_M"> M </a>
+            <a class="clickable" id="table_h_players_M"> M </a>
           </th>
           <th>
-            <a id="table_h_players_Moy"> Moy </a>
+            <a class="clickable" id="table_h_players_Moy"> Moy </a>
           </th>`;
 
         for (let index = 0; index < players.length; index++) {
@@ -863,7 +863,7 @@ class ClubsLayer extends CustomDataLayer {
                 gender = 'F'
             }
             html += `</tr><tr>
-          <td><a id="player${p.license}">${p.name + " " + p.surname.toUpperCase()}</a></td>
+          <td><a class="clickable" id="player${p.license}">${p.name + " " + p.surname.toUpperCase()}</a></td>
           <td align="center">${gender}</td>
           <td bgcolor="${ClubsLayer._getRankColor(p.rank_solo)}" align="center">${p.rank_solo}</td>
           <td bgcolor="${ClubsLayer._getRankColor(p.rank_double)}" align="center">${p.rank_double}</td>

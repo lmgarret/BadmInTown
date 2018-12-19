@@ -171,6 +171,7 @@ class DivergingStackChart{
 
         this.svg.selectAll("g.layer")
             .transition().duration(750)
+            .attr('class', 'clickable')
             .attr("fill", d => this.z(d.key));
 
         let bars = this.svg.selectAll("g.layer").selectAll("rect")
