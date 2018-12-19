@@ -739,7 +739,7 @@ class ClubsLayer extends CustomDataLayer {
      * @private
      */
     static _getGenreImage(genre) {
-        if (genre === 0) {
+        if (parseInt(genre) === 0) {
             return "img/logo_boy.png";
         } else {
             return "img/logo_girl.png"
