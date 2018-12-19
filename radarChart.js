@@ -12,7 +12,7 @@ const HALF_PI = Math.PI / 2;
 const PI = Math.PI;
 
 /**
- * takes a player level given as a string and returns its equivalent int value
+ * Takes a player level given as a string and returns its equivalent int value
  */
 function getNumber(d){
 	if(d == 'NC') return 0;
@@ -34,6 +34,8 @@ function getNumber(d){
 /**
  * Takes a player and a width, and creates a star chart for the levels
  * of that player. 
+ * Note that the chart is displayed in a div with class radarChart, 
+ * so such a div must already exist in the HTML code.
  */
 function createPlot(player, wi){
 	var margin = { top: 50, right: 30, bottom: 20, left: 30 },
@@ -60,13 +62,14 @@ function createPlot(player, wi){
 	};
 
 	// Draw the chart, get a reference the created svg element :
-	let svg_radar1 = RadarChart(".leaflet-sidebar-pane-content", data, radarChartOptions);
+	let svg_radar1 = RadarChart(".radarChart", data, radarChartOptions);
 }
 
 
 
 
 const RadarChart = function RadarChart(parent_selector, data, options) {
+	
 	//Wraps SVG text - Taken from http://bl.ocks.org/mbostock/7555321
 	const wrap = (text, width) => {
 	  text.each(function() {
@@ -177,6 +180,39 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 	/////////////// Draw the Circular grid //////////////////
 	/////////////////////////////////////////////////////////
 	
+	// Some usefull function for the background color	
+	function getColor(d){
+		if(d <= 0) return "#fffce5";
+		if(1 <= d && d < 4) return "#fff6a8";
+		if(4 <= d && d < 7) return "#ffd77a";
+		if(7 <= d && d < 10) return "#e59d62";
+		if(10 <= d) return "#bc7864";
+	}
+	
+	function getStrokeColor(d){
+		if(d <= 0) return "#e0dbac";
+		if(1 <= d && d < 4) return "#d3c547";
+		if(4 <= d && d < 7) return "#c98d00";
+		if(7 <= d && d < 10) return "#aa4c00";
+		if(10 <= d) return "#8c2708";
+	}
+	
+	//Wrapper for the grid & axes
+	var axisGrid = g.append("g").attr("class", "axisWrapper");
+	
+	//Draw the background circles
+	axisGrid.selectAll(".levels")
+		 .data(d3.range(1,(cfg.levels+1)).reverse())
+		 .enter()
+		.append("circle")
+		.attr("class", "gridCircle")
+		.attr("r", function(d, i){return radius/cfg.levels*d + 6;})
+		.style("fill", function(d, i){return getColor(d);})//function(d, i){return getColor(d);})
+		.style("stroke", function(d, i){return getStrokeColor(d);})
+		.style("fillOpacity", 0.5);
+
+
+  // Some usefull functions for the legend	
 	function getLevel(d){
 		if(d == 0) return 'NC';
 		if(d == 1) return 'P12';
@@ -193,51 +229,8 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 		if(d == 12) return 'N1';
 		
 	}
-	
-	function getColor(d){
-		if(d <= 0) return "#fffce5";
-		if(1 <= d && d < 4) return "#fff6a8";
-		if(4 <= d && d < 7) return "#ffd77a";
-		if(7 <= d && d < 10) return "#e59d62";
-		if(10 <= d) return "#bc7864";
-
-	}
-	
-	function getStrokeColor(d){
-		if(d == 0) return "#e0dbac";
-		if(d == 1) return "#d3c547";
-		if(d == 2) return "#d3c547";
-		if(d == 3) return "#d3c547";
-		if(d == 4) return "#c98d00";
-		if(d == 5) return "#c98d00";
-		if(d == 6) return "#c98d00";
-		if(d == 7) return "#aa4c00";
-		if(d == 8) return "#aa4c00";
-		if(d == 9) return "#aa4c00";
-		if(d == 10) return "#8c2708";
-		if(d == 11) return "#8c2708";
-		if(d == 12) return "#8c2708";
-	}
-	
-	//Wrapper for the grid & axes
-	var axisGrid = g.append("g").attr("class", "axisWrapper");
-	
-	//Draw the background circles
-	axisGrid.selectAll(".levels")
-		 .data(d3.range(1,(cfg.levels+1)).reverse())
-		 .enter()
-		.append("circle")
-		.attr("class", "gridCircle")
-		.attr("r", function(d, i){return radius/cfg.levels*d + 6;})
-		.style("fill", function(d, i){return getColor(d);})//function(d, i){return getColor(d);})
-		.style("stroke", function(d, i){return getStrokeColor(d);})
-		.style("fillOpacity", 0.5)
-		//.style("opacity", 0.5);
-		//.style("filter" , "url(#glow)");
-
-
-
 	const sdm = [data[0].axes[0].value, data[0].axes[1].value, data[0].axes[2].value]
+	// returns X position for the category label
 	function getX(category){
 		if(category == 0){
 			return 4;
@@ -247,9 +240,11 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 			return -20 + cos( -5 * PI / 6) * sdm[2]*radius/cfg.levels;
 		}	
 	}
+	
+	// returns Y position for the category label
 	function getY(category){
 		if(category == 0){
-			return  - sdm[0]*radius/cfg.levels;			
+			return  4 - sdm[0]*radius/cfg.levels;			
 		} else if(category == 1){
 			return 4 - sin( -1 * PI / 6) * sdm[1]*radius/cfg.levels;
 		} else {
@@ -258,7 +253,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 	}
 	
 	
-	
+	//Text indicating at what % each level is
 	axisGrid.selectAll(".axisLabel")
 	   .data(d3.range(1,(cfg.levels+1)).reverse())
 	   .enter().append("text")
@@ -269,7 +264,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 	   .attr("fill", "#777777")
 	   .text(function(d,i) { return getLevel(d); });
 		 
-	//Text indicating at what % each level is
+	//Text indicating the level label for each point
  	for(let i = 0; i < 3; ++i){
  		axisGrid.append("text")
  			.attr("x", getX(i))
@@ -338,23 +333,7 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 		.attr("class", "radarArea")
 		.attr("d", d => radarLine(d.axes))
 		.style("fill", (d,i) => cfg.color(i))
-		.style("fill-opacity", cfg.opacityArea)
-		/*.on('mouseover', function(d, i) {
-			//Dim all blobs
-			parent.selectAll(".radarArea")
-				.transition().duration(200)
-				.style("fill-opacity", 0.1);
-			//Bring back the hovered over blob
-			d3.select(this)
-				.transition().duration(200)
-				.style("fill-opacity", 0.7);
-		})
-		.on('mouseout', () => {
-			//Bring back all blobs
-			parent.selectAll(".radarArea")
-				.transition().duration(200)
-				.style("fill-opacity", cfg.opacityArea);
-		})*/;
+		.style("fill-opacity", cfg.opacityArea);
 
 	//Create the outlines
 	blobWrapper.append("path")
@@ -377,86 +356,5 @@ const RadarChart = function RadarChart(parent_selector, data, options) {
 		.style("fill", (d) => cfg.color(d.id))
 		.style("fill-opacity", 0.8);
 
-	/////////////////////////////////////////////////////////
-	//////// Append invisible circles for tooltip ///////////
-	/////////////////////////////////////////////////////////
-
-	//Wrapper for the invisible circles on top
-	const blobCircleWrapper = g.selectAll(".radarCircleWrapper")
-		.data(data)
-		.enter().append("g")
-		.attr("class", "radarCircleWrapper");
-
-	//Append a set of invisible circles on top for the mouseover pop-up
-	blobCircleWrapper.selectAll(".radarInvisibleCircle")
-		.data(d => d.axes)
-		.enter().append("circle")
-		.attr("class", "radarInvisibleCircle")
-		.attr("r", cfg.dotRadius * 1.5)
-		.attr("cx", (d,i) => rScale(d.value) * cos(angleSlice*i - HALF_PI))
-		.attr("cy", (d,i) => rScale(d.value) * sin(angleSlice*i - HALF_PI))
-		.style("fill", "none")
-		.style("pointer-events", "all")
-		.on("mouseover", function(d,i) {
-			tooltip
-				.attr('x', this.cx.baseVal.value - 10)
-				.attr('y', this.cy.baseVal.value - 10)
-				.transition()
-				.style('display', 'block')
-				.text(Format(d.value) + cfg.unit);
-		})
-		.on("mouseout", function(){
-			tooltip.transition()
-				.style('display', 'none').text('');
-		});
-
-	const tooltip = g.append("text")
-		.attr("class", "tooltip")
-		.attr('x', 0)
-		.attr('y', 0)
-		.style("font-size", "12px")
-		.style('display', 'none')
-		.attr("text-anchor", "middle")
-		.attr("dy", "0.35em");
-
-	if (cfg.legend !== false && typeof cfg.legend === "object") {
-		let legendZone = svg.append('g');
-		let names = data.map(el => el.name);
-		if (cfg.legend.title) {
-			let title = legendZone.append("text")
-				.attr("class", "title")
-				.attr('transform', `translate(${cfg.legend.translateX},${cfg.legend.translateY})`)
-				.attr("x", cfg.w - 70)
-				.attr("y", 10)
-				.attr("font-size", "12px")
-				.attr("fill", "#404040")
-				.text(cfg.legend.title);
-		}
-		let legend = legendZone.append("g")
-			.attr("class", "legend")
-			.attr("height", 100)
-			.attr("width", 200)
-			.attr('transform', `translate(${cfg.legend.translateX},${cfg.legend.translateY + 20})`);
-		// Create rectangles markers
-		legend.selectAll('rect')
-		  .data(names)
-		  .enter()
-		  .append("rect")
-		  .attr("x", cfg.w - 65)
-		  .attr("y", (d,i) => i * 20)
-		  .attr("width", 10)
-		  .attr("height", 10)
-		  .style("fill", (d,i) => cfg.color(i));
-		// Create labels
-		legend.selectAll('text')
-		  .data(names)
-		  .enter()
-		  .append("text")
-		  .attr("x", cfg.w - 52)
-		  .attr("y", (d,i) => i * 20 + 9)
-		  .attr("font-size", "11px")
-		  .attr("fill", "#737373")
-		  .text(d => d);
-	}
 	return svg;
 }
