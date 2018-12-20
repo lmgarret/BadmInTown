@@ -171,6 +171,7 @@ class DivergingStackChart{
 
         this.svg.selectAll("g.layer")
             .transition().duration(750)
+            .attr('class', 'clickable')
             .attr("fill", d => this.z(d.key));
 
         let bars = this.svg.selectAll("g.layer").selectAll("rect")
@@ -238,7 +239,9 @@ class DivergingStackChart{
                     .style('opacity', 0)
             })
             .on('click', function() {
-                clubsLayer.focusClub(this.__data__.data.id);
+				let club = clubsLayer.getClub(this.__data__.data.id);
+				clubsLayer.deselectAllDepartments(club.department)
+                clubsLayer.focusClub(club.id);
             });
 
         bars.transition().duration(750)

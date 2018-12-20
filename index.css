@@ -203,8 +203,9 @@ th {
 }
 
 .clickable:hover {
-  color: #337ab7;
+  color: inherit;
   text-decoration: underline;
+  cursor: pointer;
 }
 
 /* Search Bar */
