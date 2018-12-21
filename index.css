@@ -189,6 +189,7 @@ div.tooltip {
 /* D3 Chart */
 .bar-chart-hover {
     opacity: 0.5;
+    cursor: pointer;
 }
 
 th {
