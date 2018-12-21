@@ -238,7 +238,9 @@ class DivergingStackChart{
                     .style('opacity', 0)
             })
             .on('click', function() {
-                clubsLayer.focusClub(this.__data__.data.id);
+				let club = clubsLayer.getClub(this.__data__.data.id);
+				clubsLayer.deselectAllDepartments(club.department)
+                clubsLayer.focusClub(club.id);
             });
 
         bars.transition().duration(750)

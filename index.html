@@ -17,7 +17,7 @@
 
     <!-- D3-->
     <script src="https://d3js.org/d3.v5.min.js"></script>
-    
+
     <!-- LEAFLET -->
     <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet-src.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" crossorigin=""/>
@@ -92,11 +92,15 @@
             <br>
             <p>Welcome to BadmInTown, a Data Visualisation project using <a href="http://leafletjs.com/">Leaflet</a>.</p>
             <p>This project displays data about badminton clubs and tournaments taking place in France.</p>
+            <p>Data was obtained on <a href="http://badiste.fr/">Badiste</a>.</p>
+
 
             <h3>How to use</h3>
 
             <p>You can click on department to gain focus on them and see the data points in details. Clicking on a data point yields supplementary information. If two or more data points have the exact same GPS coordinates, they are stacked in a cluster. You can open the cluster and this its points by clicking on it.</p>
-            <p>By default the map displays information about clubs, but you can toggle this by clicking on the <i class="fas fa-school"></i> (clubs) or <i class="fas fa-trophy"></i>(tournaments) buttons.</p>
+            <p>The <i class="fa fa-chart-bar"></i> panel gives you statistics on clubs in the selected area. Use it to discover new clubs in your department! </p>
+            <p></p>
+            <p>When on a club, you can see the list of players registered in it, aswell as their levels. Click on them to get more info!</p>
         </div>
 
         <div class="leaflet-sidebar-pane" id="profile">
